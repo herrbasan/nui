@@ -7,6 +7,7 @@ ut.version_date = [2023, 3, 23];
 if(window) { window.ut = ut; }
 // 3.0 Stripped down to the really useful stuff
 // Moving this to GIT
+// What happnes when I fiddle with it here ?
 
 let isWorker = false; try{(Element);} catch(err) { isWorker = true; }
 
