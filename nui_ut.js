@@ -6,8 +6,7 @@ ut.version = [3, 0, 0];
 ut.version_date = [2023, 3, 23];
 if(window) { window.ut = ut; }
 // 3.0 Stripped down to the really useful stuff
-// Moving this to GIT
-// What happnes when I fiddle with it here ?
+
 
 let isWorker = false; try{(Element);} catch(err) { isWorker = true; }
 
@@ -297,13 +296,7 @@ ut.formatDate = function (n) {
  	out.full = out.date + ' - ' + out.time;
 	out.file = out.date + ' - ' + out.keys.hour + ':' + out.keys.minutes;
 	out.log = out.date + ' - ' + out.time + ':' + out.keys.milliseconds;
-	/*
-	out.time = ut.lz(date.getHours()) + ':' + ut.lz(date.getMinutes()) + ':' + ut.lz(date.getSeconds());
-	out.date = ut.lz(date.getDate()) + '.' + ut.lz(date.getMonth() + 1) + '.' + date.getFullYear();
-	out.date_input = + date.getFullYear() + '-' + ut.lz(date.getMonth() + 1) + '-' + ut.lz(date.getDate());
- 	out.full = out.date + ' - ' + out.time;
-	out.file = out.date + ' - ' + ut.lz(date.getHours()) + ':' + ut.lz(date.getMinutes());
-	out.log = out.date + ' - ' + out.time + ':' + ut.lz(date.getMilliseconds(), 3); */
+
 	return out;
 }
 
@@ -1226,6 +1219,31 @@ ut.detectEnv = function() {
 	}
 
 	return detect;
+}
+
+ut.drawImageDummy = function(text="Missing Asset", width=960, height=720){
+	let canvas = document.createElement('canvas');
+	var dpr = window.devicePixelRatio || 1;
+	canvas.width = width;
+	canvas.height = height;
+	
+	let ctx = canvas.getContext('2d');
+
+	ctx.beginPath();
+	ctx.rect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = 'rgba(30,30,30,0.9)';
+	ctx.fill();
+
+	ctx.fillStyle = 'rgba(237, 63, 24,1)'
+	ctx.textAlign = "center";
+	ctx.font = 40 * dpr + "px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+	ctx.fillText('ASSET MISSING',canvas.width/2,canvas.height/2 - 20);
+	ctx.fillStyle = 'rgba(255,255,255,0.8)'
+	ctx.font = 14 * dpr + "px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+	ctx.fillText(text,canvas.width/2,canvas.height/2 + 20);
+	let img = new Image();
+	img.src = canvas.toDataURL();
+	return img;
 }
 
 ut.webpSupport = function() {
