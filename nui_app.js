@@ -98,21 +98,23 @@ function renderDropZone(ar, fnc){
         }
         if(e.type == 'dragleave'){
             e.currentTarget.removeClass('active');
+            if(!html.isOver){ html.removeClass('filedrag'); }
         }
     }
 
     async function showDropzone(e){
         if(e.type == 'dragenter'){
-            html.style.display = 'block';
-            html.content.style.opacity = 1;
+            html.addClass('filedrag');
+            html.isOver = true;
+        }
+        if(e.type == 'dragleave'){
+            html.isOver = false;
         }
         if(e.type == 'dragleave' && e.target.id == id){
-            html.style.display = null;
-            html.content.style.opacity = 0;
+            html.removeClass('filedrag');
         }
         if(e.type == 'drop'){
-            html.style.display = null;
-            html.content.style.opacity = 0;
+            html.removeClass('filedrag');
             let items = html.content.els('.item');
             for(let i=0; i<items.length; i++){
                 items[i].removeClass('active');
