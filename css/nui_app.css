@@ -182,7 +182,14 @@
 	top:0; left: 0; right: 0; bottom: 0;
 	background-color: rgba(30,30,30,0.9);
 	z-index: 100;
-	display:none;
+	pointer-events: none;
+	transition: opacity 0.2s;
+	opacity: 0;
+}
+
+.nui-dropzone.filedrag {
+	pointer-events: all;
+	opacity: 1;
 }
 
 .nui-dropzone .nui-dropzone-content{
@@ -191,8 +198,6 @@
 	display: grid;
 	grid-template-rows: auto;
 	gap: 1em;
-	transition: all 0.2s;
-	opacity: 0;
 }
 
 .nui-dropzone .nui-dropzone-content .item{
@@ -206,4 +211,5 @@
 
 .nui-dropzone .nui-dropzone-content .item.active {
 	background-color: rgba(225,225,225,0.2);
+	opacity: 1;
 }
