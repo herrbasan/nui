@@ -73,6 +73,7 @@ async function dropZone(ar, fnc, target){
 }
 
 function renderDropZone(ar, fnc){
+    console.log(ar)
     let id = 'dropzone_' + ut.id();
     if(!fnc) { fnc = console.log }
     let html = ut.htmlObject(/*html*/`

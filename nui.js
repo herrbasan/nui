@@ -818,6 +818,39 @@ nui.modal_page = function(prop) {
 	return html;
 }
 
+nui.dropZone = function(name, target, fnc){
+	name = name || 'Drop Files Here ..'
+	fnc = fnc || console.log;
+	let html = ut.htmlObject(/*html*/`
+		<div class="nui-inline-dropzone">
+			<div class="nui-inline-dropzone-content">
+				${ut.icon('upload',true)}
+				<div class="label">${name}</div>
+			</div>
+		</div>
+	`)
+	if(!target.dropzone){
+		target.dropzone = html;
+		target.addEventListener('dragleave', dropZone)
+		target.addEventListener('dragenter', dropZone)
+		target.addEventListener('drop', dropZone)
+		window.addEventListener('dragover', (e) => { e.preventDefault(); })
+	}
+	function dropZone(e){
+		if(e.type == 'dragenter'){
+			target.addClass('dropzone_active');
+		}
+		if(e.type == 'dragleave' || e.type == 'drop'){
+			target.removeClass('dropzone_active');
+		}
+		if(e.type == 'drop'){
+			e.preventDefault();
+			fnc(e.dataTransfer.files);
+		}
+	}
+	target.appendChild(html);
+}
+
 /* Modal Page
 ##########################################################################################
 ########################################################################################## */

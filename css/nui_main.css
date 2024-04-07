@@ -1276,7 +1276,36 @@ main > footer {
 	transition: width 0.1s;
 }
 
+.dropzone_active > *{
+	pointer-events: none;
+}
 
+.nui-inline-dropzone {
+	position: absolute;
+	background-color: rgba(var(--color-shade4),0.9);
+	inset: 0;
+	z-index: 1000;
+	opacity: 0;
+	transition: opacity 0.2s;
+	pointer-events: none;
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.nui-inline-dropzone .nui-icon-container{
+	width: 100%;
+}
+
+.nui-inline-dropzone .nui-icon-container svg{
+	width: 3rem;
+	height: 3rem;
+}
+
+.dropzone_active .nui-inline-dropzone {
+	opacity: 1;
+}
 
 
 /* n000b Buttons */
