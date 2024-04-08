@@ -272,7 +272,6 @@ nui.toggleMenu = function(){
 	document.body.classList.toggle('nui-sidebar-open');
 }
 
-console.warn('Breaking Change: loaderShow click event removed');
 nui.loaderShow = function(target, msg="LOADING"){
 	let html = ut.htmlObject( /*html*/ `
 	<div id="loader" class="nui-overlay">

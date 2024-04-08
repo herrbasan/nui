@@ -42,7 +42,7 @@ function renderWindowFrame(prop){
     </div>
     `)
 
-    if(prop.fnc_close){
+    if(prop?.fnc_close){
         html.el('.nui-title-bar .close').addEventListener('click', prop.fnc_close);
     }
     else {
