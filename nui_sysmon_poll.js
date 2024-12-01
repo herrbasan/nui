@@ -1,7 +1,7 @@
 'use strict';
 
-import ut from "nui_ut.js";
-import { graph } from "nui_graph.js";
+import ut from "./nui_ut.js";
+import { graph } from "./nui_graph.js";
 
 const sysmon_poll = {};
 
