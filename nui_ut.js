@@ -85,22 +85,27 @@ ut.allIdxByProp = function(ar, prop, value) {
 }
 
 ut.deep_get = function(obj, path){
-	let split = path.split('.');
-	if(split.length == 1) { return obj[path] ;}
-	if(split.length == 2) { return obj[split[0]][split[1]] ;}
-	if(split.length == 3) { return obj[split[0]][split[1]][split[2]] ;}
-	if(split.length == 4) { return obj[split[0]][split[1]][split[2]][split[3]] ;}
-	if(split.length == 5) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]] ;}
-	if(split.length == 6) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]] ;}
-	if(split.length == 7) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]] ;}
-	if(split.length == 8) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]] ;}
-	if(split.length == 9) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]][split[8]] ;}
-	if(split.length > 9){
-		let oobj = obj;
-		for (var i=0; i<split.length; i++){
-			oobj = oobj[split[i]];
-		};
-		return oobj;
+	try {
+		let split = path.split('.');
+		if(split.length == 1) { return obj[path] ;}
+		if(split.length == 2) { return obj[split[0]][split[1]] ;}
+		if(split.length == 3) { return obj[split[0]][split[1]][split[2]] ;}
+		if(split.length == 4) { return obj[split[0]][split[1]][split[2]][split[3]] ;}
+		if(split.length == 5) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]] ;}
+		if(split.length == 6) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]] ;}
+		if(split.length == 7) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]] ;}
+		if(split.length == 8) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]] ;}
+		if(split.length == 9) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]][split[8]] ;}
+		if(split.length > 9){
+			let oobj = obj;
+			for (var i=0; i<split.length; i++){
+				oobj = oobj[split[i]];
+			};
+			return oobj;
+		}
+	}
+	catch(e){
+		return undefined;
 	}
 }
 
@@ -1412,5 +1417,6 @@ ut.ease = function(prop){
 	  }
 	requestAnimationFrame(animate);
 }
+
 
 export default ut;
