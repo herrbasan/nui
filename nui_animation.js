@@ -1,11 +1,11 @@
 'use strict';
 import ut from './nui_ut.js';
 
-function ani(obj){
+function ani(el, duration, props, options){
     let ani_default_options = { 
-        duration:1000, 
+        duration:duration || 1000, 
         fill:'forwards',
-        composit:'add',
+        composit:'replace', // add, replace, accumulate
         direction:'normal',
         delay:0,
         endDelay:0,
@@ -13,37 +13,37 @@ function ani(obj){
         iterations:1
 
     }
-    if(obj.options){
-        for(let key in obj.options){
-            ani_default_options[key] = obj.options[key];
+    if(options){
+        for(let key in options){
+            ani_default_options[key] = options[key];
         }
     }
-    obj.options = ani_default_options;
-    let keyframes = new KeyframeEffect(obj.el, parseProps(obj.props), obj.options)
+    options = ani_default_options;
+    let keyframes = new KeyframeEffect(el, parseProps(props), options)
     let mation = new Animation(keyframes, document.timeline);
     let loopStop = true;
     let ani = {};
     ani.animation = mation;
-    ani.duration = obj.options.duration;
+    ani.duration = options.duration;
     ani.stops = [];
-    for(let i=0; i<obj.props.length; i++){
-        if(!obj.props[i].offset){
+    for(let i=0; i<props.length; i++){
+        if(!props[i].offset){
             if(i == 0){
-                obj.props[i].offset = 0;
+                props[i].offset = 0;
             }
-            else if(i == obj.props.length-1){
-                obj.props[i].offset = 1;
+            else if(i == props.length-1){
+                props[i].offset = 1;
             }
             else {
-                obj.props[i].offset = i/obj.props.length;
+                props[i].offset = i/props.length;
             }
         }
-        ani.stops.push(obj.props[i].offset);
+        ani.stops.push(props[i].offset);
     }
     
     reset();
-    if(!obj.paused) { loop(); play(); }
-    else { obj.el.css(parseProp(obj.props[0])); }
+    if(!options.paused) { loop(); play(); }
+    else { el.css(parseProp(props[0])); }
     
     mation.onfinish = finish;
     mation.onremove = remove;
@@ -77,7 +77,7 @@ function ani(obj){
     function finish(e){
         events('finished');
         loopStop = true;
-        if(obj.cb) { obj.cb(ani); }
+        if(options.cb) { options.cb(ani); }
     }
 
     function reset(){
@@ -90,8 +90,8 @@ function ani(obj){
     }
 
     function events(msg, data){
-        if(obj.events) {
-            obj.events({type:msg, target:ani});
+        if(options.events) {
+            options.events({type:msg, target:ani});
         }
     }
 
@@ -99,7 +99,7 @@ function ani(obj){
         if(mation?.currentTime != ani.lastTime){
             ani.currentTime = mation.currentTime;
             ani.lastTime = ani.currentTime;
-            ani.progress = ani.currentTime / obj.options.duration;
+            ani.progress = ani.currentTime / options.duration;
         }
         if(ani.lastState != mation.playState){
             ani.lastState = mation.playState;
@@ -110,8 +110,8 @@ function ani(obj){
             ani.currentKeyframe = idx;
             events('keyframe', {idx:idx});
         }
-        if(obj.update) {
-            obj.update(ani); 
+        if(options.update) {
+            options.update(ani); 
         }
     }
 
