@@ -1,30 +1,41 @@
 'use strict';
 import ut from './nui_ut.js';
 
+let isWorker = false; try{(Element);} catch(err) { isWorker = true; }
+if(!isWorker){
+	if(!Element.prototype.ani) { Element.prototype.ani = function(duration, props, options) { ani(this, duration, props, options); }}
+}
+
 function ani(el, duration, props, options){
     let ani_default_options = { 
         duration:duration || 1000, 
         fill:'forwards',
-        composit:'replace', // add, replace, accumulate
+        composite:'replace', // add, replace, accumulate
         direction:'normal',
         delay:0,
         endDelay:0,
         iterationStart:0,
         iterations:1
-
     }
     if(options){
         for(let key in options){
             ani_default_options[key] = options[key];
         }
     }
-    options = ani_default_options;
+    options = parseProps(ani_default_options);
+    if(!Array.isArray(props)){
+        props = [{}, props];
+        if(props[1].easing){
+            props[0].easing = props[1].easing;
+        }
+    }
     let keyframes = new KeyframeEffect(el, parseProps(props), options)
     let mation = new Animation(keyframes, document.timeline);
     let loopStop = true;
     let ani = {};
     ani.animation = mation;
     ani.duration = options.duration;
+    ani.totalDuration = options.duration + options.delay + options.endDelay;
     ani.stops = [];
     for(let i=0; i<props.length; i++){
         if(!props[i].offset){
@@ -35,12 +46,15 @@ function ani(el, duration, props, options){
                 props[i].offset = 1;
             }
             else {
-                props[i].offset = i/props.length;
+                props[i].offset = i/(props.length-1);
             }
         }
-        ani.stops.push(props[i].offset);
+        ani.stops.push((props[i].offset * options.duration) + options.delay);
     }
-    
+    if(options.delay){
+        ani.stops.unshift(0);
+    }
+
     reset();
     if(!options.paused) { loop(); play(); }
     else { el.css(parseProp(props[0])); }
@@ -95,11 +109,12 @@ function ani(el, duration, props, options){
         }
     }
 
+
     function update(){
         if(mation?.currentTime != ani.lastTime){
             ani.currentTime = mation.currentTime;
             ani.lastTime = ani.currentTime;
-            ani.progress = ani.currentTime / options.duration;
+            ani.progress = ani.currentTime / ani.totalDuration;
         }
         if(ani.lastState != mation.playState){
             ani.lastState = mation.playState;
@@ -118,7 +133,7 @@ function ani(el, duration, props, options){
     function checkforKeyframe(){
         let idx = 0;
         for(let i=0; i<ani.stops.length; i++){
-            if(ani.progress >= ani.stops[i]){
+            if(ani.currentTime >= ani.stops[i]){
                 idx = i;
             }
         }
@@ -143,15 +158,17 @@ function ani(el, duration, props, options){
     
     function parseProp(props){
         let tmpl = {
-            tx:{template:'translateX', transform:true, defaultMetric:'px'},
-            ty:{template:'translateY', transform:true, defaultMetric:'px'},
-            tz:{template:'translateZ', transform:true, defaultMetric:'px'},
+            x:{template:'translateX', transform:true, defaultMetric:'px'},
+            y:{template:'translateY', transform:true, defaultMetric:'px'},
+            z:{template:'translateZ', transform:true, defaultMetric:'px'},
             scaleX:{template:'scaleX', transform:true, defaultMetric:false},
             scaleY:{template:'scaleY', transform:true, defaultMetric:false},
             scale:{template:'scale', transform:true, defaultMetric:false},
             rotate:{template:'rotate', transform:true, defaultMetric:'deg'},
-            x:{template:'left', defaultMetric:'px'},
-            y:{template:'top', defaultMetric:'px'},
+            left:{defaultMetric:'px'},
+            top:{defaultMetric:'px'},
+            right:{defaultMetric:'px'},
+            bottom:{defaultMetric:'px'},
             width:{defaultMetric:'px'},
             height:{defaultMetric:'px'},
         }
