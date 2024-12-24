@@ -54,6 +54,9 @@ function ani(el, duration, props, options){
     if(options.delay){
         ani.stops.unshift(0);
     }
+    if(options.endDelay){
+        ani.stops.push(ani.totalDuration);
+    }
 
     reset();
     if(!options.paused) { loop(); play(); }
