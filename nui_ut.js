@@ -26,7 +26,7 @@ if(!Array.prototype.includesDeep) { Array.prototype.includesDeep = function(path
 
 
 // -----------------------------------------------------------------------------------------------
-// Hack to optimize nexted props
+// Hack to optimize nested props
 ut.sortByKey = function (array, path, numeric=false) {
 	let split = path.split('.');
 	let compare =  [ 
@@ -1343,15 +1343,21 @@ ut.setTheme = function(_el, listen_for_change){
 }
 
 /* needs to be better */
-ut.isVisibleObserver = function(_el){
+ut.isVisibleObserver = function(_el, cb){
 	let el = ut.el(_el);
+	const event = new Event("visibility_change");
 	const observer = new IntersectionObserver((entries) => {
 		if(entries[0].isIntersecting){
 			el.isVisible = true;
 		} else {
 			el.isVisible = false;
 		}
+		el.dispatchEvent(event);
 	});
+	if(cb) {
+		el.removeVisibilityEvent = () => { el.removeEventListener('visibility_change', cb) }
+		el.addEventListener('visibility_change', cb)
+	}
 	observer.observe(el);
 }
 

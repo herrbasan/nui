@@ -29,6 +29,7 @@ function ani(el, duration, props, options){
             props[0].easing = props[1].easing;
         }
     }
+   
     let keyframes = new KeyframeEffect(el, parseProps(props), options)
     let mation = new Animation(keyframes, document.timeline);
     let loopStop = true;
