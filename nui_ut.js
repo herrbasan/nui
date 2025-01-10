@@ -1343,7 +1343,7 @@ ut.setTheme = function(_el, listen_for_change){
 }
 
 /* needs to be better */
-ut.isVisibleObserver = function(_el, cb){
+ut.isVisibleObserver = function(_el, cb, options){
 	let el = ut.el(_el);
 	const event = new Event("visibility_change");
 	const observer = new IntersectionObserver((entries) => {
@@ -1353,7 +1353,7 @@ ut.isVisibleObserver = function(_el, cb){
 			el.isVisible = false;
 		}
 		el.dispatchEvent(event);
-	});
+	}, options);
 	if(cb) {
 		el.removeVisibilityEvent = () => { el.removeEventListener('visibility_change', cb) }
 		el.addEventListener('visibility_change', cb)
