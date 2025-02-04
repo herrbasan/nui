@@ -26,7 +26,7 @@ if(!Array.prototype.includesDeep) { Array.prototype.includesDeep = function(path
 
 
 // -----------------------------------------------------------------------------------------------
-// Hack to optimize nexted props
+// Hack to optimize nested props
 ut.sortByKey = function (array, path, numeric=false) {
 	let split = path.split('.');
 	let compare =  [ 
@@ -85,22 +85,27 @@ ut.allIdxByProp = function(ar, prop, value) {
 }
 
 ut.deep_get = function(obj, path){
-	let split = path.split('.');
-	if(split.length == 1) { return obj[path] ;}
-	if(split.length == 2) { return obj[split[0]][split[1]] ;}
-	if(split.length == 3) { return obj[split[0]][split[1]][split[2]] ;}
-	if(split.length == 4) { return obj[split[0]][split[1]][split[2]][split[3]] ;}
-	if(split.length == 5) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]] ;}
-	if(split.length == 6) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]] ;}
-	if(split.length == 7) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]] ;}
-	if(split.length == 8) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]] ;}
-	if(split.length == 9) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]][split[8]] ;}
-	if(split.length > 9){
-		let oobj = obj;
-		for (var i=0; i<split.length; i++){
-			oobj = oobj[split[i]];
-		};
-		return oobj;
+	try {
+		let split = path.split('.');
+		if(split.length == 1) { return obj[path] ;}
+		if(split.length == 2) { return obj[split[0]][split[1]] ;}
+		if(split.length == 3) { return obj[split[0]][split[1]][split[2]] ;}
+		if(split.length == 4) { return obj[split[0]][split[1]][split[2]][split[3]] ;}
+		if(split.length == 5) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]] ;}
+		if(split.length == 6) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]] ;}
+		if(split.length == 7) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]] ;}
+		if(split.length == 8) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]] ;}
+		if(split.length == 9) { return obj[split[0]][split[1]][split[2]][split[3]][split[4]][split[5]][split[6]][split[7]][split[8]] ;}
+		if(split.length > 9){
+			let oobj = obj;
+			for (var i=0; i<split.length; i++){
+				oobj = oobj[split[i]];
+			};
+			return oobj;
+		}
+	}
+	catch(e){
+		return undefined;
 	}
 }
 
@@ -532,6 +537,7 @@ ut.css = function (q, cs, remove=false) {
 		}
 	}
 }
+
 
 ut.addClasses = function (_el, _classNames) {
 	let classNames = _classNames;
@@ -1337,15 +1343,21 @@ ut.setTheme = function(_el, listen_for_change){
 }
 
 /* needs to be better */
-ut.isVisibleObserver = function(_el){
+ut.isVisibleObserver = function(_el, cb, options){
 	let el = ut.el(_el);
+	const event = new Event("visibility_change");
 	const observer = new IntersectionObserver((entries) => {
 		if(entries[0].isIntersecting){
 			el.isVisible = true;
 		} else {
 			el.isVisible = false;
 		}
-	});
+		el.dispatchEvent(event);
+	}, options);
+	if(cb) {
+		el.removeVisibilityEvent = () => { el.removeEventListener('visibility_change', cb) }
+		el.addEventListener('visibility_change', cb)
+	}
 	observer.observe(el);
 }
 
@@ -1412,5 +1424,6 @@ ut.ease = function(prop){
 	  }
 	requestAnimationFrame(animate);
 }
+
 
 export default ut;
