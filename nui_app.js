@@ -6,6 +6,8 @@ let appTools = {
     dropZone:dropZone
 };
 
+let base_url = import.meta.url.substring(0, import.meta.url.lastIndexOf("/")+1);
+
 /* App Tools
 ##########################################################################################
 ########################################################################################## */
@@ -13,7 +15,7 @@ let appTools = {
 async function appWindow(prop){
     return new Promise(async (resolve, rejcet) => {
         let html = renderWindowFrame(prop);
-        await checkCSS('./nui/css/nui_app.css', '--nui-app');
+        await checkCSS('css/nui_app.css', '--nui-app');
         ut.killKids(document.body);
         document.body.appendChild(html);
         resolve(html);
@@ -63,14 +65,34 @@ function renderWindowFrame(prop){
     return html;
 }
 
+/**
+ * Creates and initializes a drop zone element.
+ * 
+ * @param {Array} ar - An array of objects representing items to be added to the drop zone.
+ * @param {Object} ar[].name - The unique identifier for the item.
+ * @param {Object} ar[].label - The display label for the item.
+ * @param {Function} fnc - A callback function to be executed when an item is dropped.
+ * @param {HTMLElement} target - The target element to which the drop zone will be appended.
+ * @returns {Promise<HTMLElement>} A promise that resolves to the rendered drop zone HTML element.
+ */
 async function dropZone(ar, fnc, target){
     return new Promise(async (resolve, rejcet) => {
         let html = renderDropZone(ar, fnc);
-        await checkCSS('./nui/css/nui_app.css', '--nui-app');
+        await checkCSS('css/nui_app.css', '--nui-app');
         if(target){ target.appendChild(html)}
         resolve(html);
     })
 }
+
+/**
+ * Renders a drop zone element.
+ * 
+ * @param {Array} ar - An array of objects representing items to be added to the drop zone.
+ * @param {Object} ar[].name - The unique identifier for the item.
+ * @param {Object} ar[].label - The display label for the item.
+ * @param {Function} fnc - A callback function to be executed when an item is dropped. Defaults to console.log.
+ * @returns {HTMLElement} The rendered drop zone HTML element.
+ */
 
 function renderDropZone(ar, fnc){
     console.log(ar)
@@ -122,7 +144,7 @@ function renderDropZone(ar, fnc){
             }
             e.preventDefault();
             
-            fnc(e.dataTransfer.files);
+            fnc(e); 
         }
     }
     return html;
