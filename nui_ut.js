@@ -1425,5 +1425,25 @@ ut.ease = function(prop){
 	requestAnimationFrame(animate);
 }
 
+let nui_css_imports = {};
+ut.checkNuiCss = function(prop, url){
+	let css_vars = ut.getCssVars();
+	if(nui_css_imports[prop]){ return css_vars; }
+	return new Promise(async (resolve, reject) => {
+		if(nui_css_imports[prop]){ resolve(css_vars); }
+		nui_css_imports[prop] = true;
+		if(!css_vars[prop]){
+			nui_css_imports[prop] = true;
+			url = import.meta.url.split('/').slice(0, -1).join('/') + '/css/' + url;
+			ut.fb('Injecting ' + url)
+			await ut.headImport({url:url, type:'css'});
+			css_vars = ut.getCssVars();
+		}
+		else {
+			ut.fb('CSS for ' + prop + ' already loaded');
+		}
+		resolve(css_vars);
+	})
+}
 
 export default ut;

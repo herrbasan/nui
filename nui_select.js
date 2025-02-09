@@ -6,18 +6,21 @@ let css_vars;
 ################################################################################################
 ################################################################################################ */
 
-const superSelect = function(_el, settings){
-	checkCSS('./nui/css/nui_select.css', '--nui-select').then(() => {
+function superSelect(_el, settings){
+	ut.checkNuiCss('--nui-select', 'nui_select.css')
+	/*checkCSS('./nui/css/nui_select.css', '--nui-select').then(() => {
 		initSuperSelect(_el, settings);
-	});
+	});*/
+	
 	if(!_el){
 		_el = renderSelect(settings);
 		settings.target.appendChild(_el);
 	}
+	initSuperSelect(_el, settings);
 	return _el;
 }
 
-const initSuperSelect = function(_el, settings){
+function initSuperSelect(_el, settings){
 	let id = ut.id();
 
 	_el.settings = settings ? settings : {searchable:false, animation:true};
@@ -553,6 +556,7 @@ function dispatcher(_el, type, detail){
 	_el.dispatchEvent(event);
 }
 
+/* Maybe to be removed */
 function checkCSS(url, prop){
 	return new Promise(async (resolve, reject) => {
 		if(!css_vars){

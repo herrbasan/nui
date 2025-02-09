@@ -12,13 +12,7 @@ init();
 async function init(){
 	let env = ut.detectEnv();
 	fb(env);
-
-	nui.css_vars = ut.getCssVars();
-	if(!nui.css_vars['--nui-main']){
-		fb('Injecting nui_main.css')
-		await ut.headImport({url:'./nui/css/nui_main.css', type:'css'});
-		nui.css_vars = ut.getCssVars();
-	}
+	nui.css_vars = await ut.checkNuiCss('--nui-main', 'nui_main.css');
 	fb(nui.css_vars['--nui-main'].value);
 }
 

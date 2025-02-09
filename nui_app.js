@@ -13,7 +13,8 @@ let appTools = {
 async function appWindow(prop){
     return new Promise(async (resolve, rejcet) => {
         let html = renderWindowFrame(prop);
-        await checkCSS('./nui/css/nui_app.css', '--nui-app');
+        css_vars = await ut.checkNuiCss('--nui-main', 'nui_main.css');
+        //await checkCSS('./nui/css/nui_app.css', '--nui-app');
         ut.killKids(document.body);
         document.body.appendChild(html);
         resolve(html);

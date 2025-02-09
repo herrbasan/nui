@@ -2,7 +2,7 @@
 import ut from './nui_ut.js';
 import dragSlider from './nui_drag_slider.js';
 
-let css_vars;
+
 
 /* Media Player
 ##########################################################################################
@@ -10,14 +10,14 @@ let css_vars;
 
 function mediaPlayer(options){
 	options.html = renderHTML();
-	checkCSS('./nui/css/nui_media.css', '--nui-media').then(() => {
-		if(options.media){
-			initMediaPlayer(options);
-		}
-		else {
-			createMediaPlayer(options)
-		}
-	})
+	ut.checkNuiCss('--nui-media','nui_media.css')
+	if(options.media){
+		initMediaPlayer(options);
+	}
+	else {
+		createMediaPlayer(options)
+	}
+	
 	return options.html;
 }
 
@@ -516,24 +516,6 @@ function initMediaPlayer(settings) {
 	return html;
 }
 
-
-function checkCSS(url, prop){
-	return new Promise(async (resolve, reject) => {
-		if(!css_vars){
-			css_vars = ut.getCssVars();
-			if(!css_vars[prop]){
-				console.log('Injecting ' + url)
-				await ut.headImport({url:url, type:'css'});
-			}
-			css_vars = ut.getCssVars();
-			console.log(css_vars[prop].value);
-			resolve();
-		}
-		else {
-			resolve();
-		}
-	})
-}
 
 function renderHTML(){
 	let html = ut.htmlObject( /*html*/ `

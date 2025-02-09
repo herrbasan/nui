@@ -26,7 +26,11 @@ let verbose = true;
  */
 
 function gallery(prop){
+    ut.checkNuiCss('--nui-gallery','nui_gallery.css');
     let html = renderHTML();
+    renderGallery(html, prop);
+    return html;
+    /*
     html.css_vars = ut.getCssVars();
 	if(!html.css_vars['--nui-gallery']){
 		fb('Injecting nui_gallery.css')
@@ -39,7 +43,7 @@ function gallery(prop){
         html.css_vars = ut.getCssVars();
         renderGallery(html, prop);
     }
-    return html;
+    return html;*/
 }
 
 
