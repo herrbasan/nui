@@ -15,7 +15,7 @@ let base_url = import.meta.url.substring(0, import.meta.url.lastIndexOf("/")+1);
 async function appWindow(prop){
     return new Promise(async (resolve, rejcet) => {
         let html = renderWindowFrame(prop);
-        await checkCSS('./nui/css/nui_app.css', '--nui-app');
+        ut.checkNuiCss('--nui-app','nui_app.css');
         ut.killKids(document.body);
         document.body.appendChild(html);
         resolve(html);
