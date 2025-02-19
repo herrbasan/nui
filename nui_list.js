@@ -5,10 +5,24 @@ let first = true;
 
 
 /**
- * SuperList
- * @param {object} options Options
- * @param {Element} option.target Target to render the list into 
- * @returns 
+ * Creates a virtualized list component with sorting and searching capabilities
+ * @param {Object} options Configuration options
+ * @param {Element} options.target DOM element to render the list into
+ * @param {string} [options.id] Optional ID for the list container
+ * @param {Array} options.data Array of data items to display
+ * @param {Function} options.render Callback function to render each item (data) => Element
+ * @param {Function} [options.events] Optional callback for list events (event) => void
+ * @param {boolean} [options.logmode] Enable log mode for auto-scrolling
+ * @param {boolean} [options.verbose] Enable verbose console logging
+ * @param {boolean} [options.single] Restrict to single selection mode
+ * @param {Object} [options.footer] Footer configuration
+ * @param {Array<{label: string, type: string, fnc: Function}>} [options.footer.buttons_left] Left footer buttons
+ * @param {Array<{label: string, type: string, fnc: Function}>} [options.footer.buttons_right] Right footer buttons
+ * @param {Array<{prop: string}>} [options.search] Searchable properties configuration
+ * @param {Array<{label: string, prop: string, numeric: boolean}>} [options.sort] Sortable columns configuration
+ * @param {number} [options.sort_default] Default sort column index
+ * @param {string} [options.sort_direction_default='up'] Default sort direction ('up'|'down')
+ * @returns {Object} List instance with control methods
  */
 function superList(options) {
 	let target = options.target;
@@ -191,6 +205,10 @@ function superList(options) {
 	/* Data 
 	######################################################################################################## */
 
+	/**
+	 * Updates the list's data and refreshes the view
+	 * @private
+	 */
 	function updateData(){
 		sl.clone = [];
 		for(let i=0; i<options.data.length; i++){
@@ -201,6 +219,10 @@ function superList(options) {
 		sl.container.style.height = sl.filtered.length * sl.sl_height + 'px';
 	}
 
+	/**
+	 * Adds new items to the existing data
+	 * @private
+	 */
 	function appendData(){
 		if(sl.clone.length < options.data.length){
 			for(let i=sl.clone.length; i<options.data.length; i++){
@@ -213,6 +235,13 @@ function superList(options) {
 		}
 	}
 
+	/**
+	 * Updates a single item in the list
+	 * @private
+	 * @param {number} idx Index of item to update
+	 * @param {Object} data New data for the item
+	 * @param {boolean} [force=true] Force immediate update
+	 */
 	function updateItem(idx, data, force=true){
 		if(data) { sl.clone[idx].data = data }
 		sl.clone[idx].el = null;
@@ -422,6 +451,12 @@ function superList(options) {
 		}
 	}
 
+	/**
+	 * Gets currently selected items
+	 * @private
+	 * @param {boolean} [full=false] If true, returns full item objects instead of indices
+	 * @returns {Array} Selected items or indices
+	 */
 	function getSelection(full=false){
 		let out = [];
 		for(let i=0; i<sl.filtered.length; i++){
@@ -507,7 +542,11 @@ function superList(options) {
 		`
 		doc.querySelector('head').prepend(sheet);
 	}
-	
+
+	/**
+	 * Cleans up the list component and removes event listeners
+	 * @public
+	 */
 	function cleanUp(){
 		fb('CleanUp');
 		sl.event({type:'list_cleanUp', value:'cleanup'})
