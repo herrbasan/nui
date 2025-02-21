@@ -1201,6 +1201,13 @@ ut.icon = function(id, wrap_in_container, return_as_element){
 	return out;
 }
 
+ut.materialIcon = function(id, wrap_in_container, return_as_element){
+	if(wrap_in_container) { out = `<div class="nui-icon-container">${svg}</div>`}
+	if(return_as_element) { out = ut.createElement('svg', {class:`nui-icon ii_${id}`, attributes:{height:'24px', viewBox:'0 0 24 24', width:'24px', fill:'#ffffff'}}); }
+	console.log(id)
+	return out;
+}
+
 ut.detectEnv = function() {
 	let detect = {
 		isIE: ((navigator.appName === 'Microsoft Internet Explorer') || ((navigator.appName === 'Netscape') && (new RegExp('Trident/.*rv:([0-9]{1,}[.0-9]{0,})').exec(navigator.userAgent) !== null))),
