@@ -112,7 +112,11 @@ function superList(options) {
 	sl.stop = false;
 	sl.win = window || target.ownerDocument.defaultView;
 	
-	
+	sl.list.addEventListener('scroll', (e) => { 
+		sl.scrollPos = sl.list.scrollTop;
+		sl.scrollProz = sl.scrollPos / (sl.container.offsetHeight - sl.list.offsetHeight);
+	});
+
 	register_event(sl.win, 'resize', resize);
 	function resize(e, delay=30){ clearTimeout(sl.checkHeight_timeout); sl.checkHeight_timeout = setTimeout(checkHeight,delay); }
 	register_event(sl.container, 'click', containerClick)
@@ -325,7 +329,7 @@ function superList(options) {
 	function update(force=false) {
 		let data = sl.filtered;
 		if(data.length > 0){
-			sl.scrollPos = Math.round(sl.list.scrollTop);
+			//sl.scrollPos = Math.round(sl.list.scrollTop);
 			if(sl.options.logmode && !sl.scrollMute){
 				if(sl.list.scrollTop + sl.list.offsetHeight > sl.container.offsetHeight-(sl.sl_height+1)){
 					sl.list.scrollTop = sl.container.offsetHeight;
@@ -343,11 +347,8 @@ function superList(options) {
 				const endIdx = Math.min(sl.maxVis + sl.offSet, data.length);
 	
 				// Clear all items from container
-				//ut.killKids(sl.container);
-				let childrens = sl.container.children;
-				for(let i=0; i<childrens.length; i++){
-					sl.container.removeChild(childrens[i]);
-				}
+				ut.killKids(sl.container);
+	
 				// Only iterate over visible items
 				for(let i = startIdx; i < endIdx; i++){
 					if(!data[i].el){
@@ -365,6 +366,7 @@ function superList(options) {
 					}
 					data[i].el.fidx = i;
 					data[i].el.style.top = i*sl.sl_height + 'px';
+					//data[i].el.style.transform = 'translateY(' + i*sl.sl_height + 'px)';
 				}
 
 	

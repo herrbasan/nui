@@ -2166,6 +2166,7 @@ input[type="number"]:focus {
 	background-color: rgba(var(--color-shade3),0.5);
 	text-align: left;
 	cursor: pointer;
+	overflow: hidden;
 }
 
 .superlist-list-item:hover{
