@@ -13,7 +13,7 @@ let isWorker = false; try{(Element);} catch(err) { isWorker = true; }
 if(!isWorker){
 	if(!Element.prototype.el) { Element.prototype.el = function(s) { return ut.el(s, this); }}
 	if(!Element.prototype.els) { Element.prototype.els = function(s) { return ut.els(s, this); }}
-	if(!Element.prototype.html) { Element.prototype.html = function(s) { ut.html(this, s); }}
+	//if(!Element.prototype.html) { Element.prototype.html = function(s) { ut.html(this, s); }}
 	if(!Element.prototype.css) { Element.prototype.css = function(s, remove) { ut.css(this, s, remove); }}
 	if(!Element.prototype.hasClass) { Element.prototype.hasClass = function(s) { return ut.hasClass(this, s); }}
 	if(!Element.prototype.addClass) { Element.prototype.addClass = function(s) { ut.addClasses(this, s); }}

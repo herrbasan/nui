@@ -7,21 +7,45 @@ let first = true;
 /**
  * Creates a virtualized list component with sorting and searching capabilities
  * @param {Object} options Configuration options
- * @param {Element} options.target DOM element to render the list into
- * @param {string} [options.id] Optional ID for the list container
- * @param {Array} options.data Array of data items to display
- * @param {Function} options.render Callback function to render each item (data) => Element
- * @param {Function} [options.events] Optional callback for list events (event) => void
- * @param {boolean} [options.logmode] Enable log mode for auto-scrolling
- * @param {boolean} [options.verbose] Enable verbose console logging
- * @param {boolean} [options.single] Restrict to single selection mode
- * @param {Object} [options.footer] Footer configuration
- * @param {Array<{label: string, type: string, fnc: Function}>} [options.footer.buttons_left] Left footer buttons
- * @param {Array<{label: string, type: string, fnc: Function}>} [options.footer.buttons_right] Right footer buttons
- * @param {Array<{prop: string}>} [options.search] Searchable properties configuration
- * @param {Array<{label: string, prop: string, numeric: boolean}>} [options.sort] Sortable columns configuration
- * @param {number} [options.sort_default] Default sort column index
- * @param {string} [options.sort_direction_default='up'] Default sort direction ('up'|'down')
+ * @param {HTMLElement} options.target - DOM element to render the list into
+ * @param {Array<any>} options.data - Array of data items to display
+ * @param {Function} options.render - Callback function to render each item (data) => HTMLElement
+ * @param {string} [options.id] - Optional ID for the list container
+ * @param {Function} [options.events] - Optional callback for list events (event) => void
+ * 
+ * @param {Array<{prop: string}>} [options.search] - Array of searchable properties
+ * @example
+ * search: [
+ *   { prop: 'name' },
+ *   { prop: 'country' },
+ *   { prop: 'tags' }
+ * ]
+ * 
+ * @param {Array<{label: string, prop: string}>} [options.sort] - Array of sortable columns
+ * @param {number} [options.sort_default] - Index of default sort column (0-based)
+ * @param {('up'|'down')} [options.sort_direction_default='up'] - Default sort direction
+ * @example
+ * sort: [
+ *   { label: 'Name', prop: 'name' },
+ *   { label: 'Country', prop: 'countrycode' },
+ *   { label: 'Votes', prop: 'votes' }
+ * ],
+ * sort_default: 0, // Sort by first column (Name)
+ * sort_direction_default: 'down' // Sort in descending order
+ * 
+ * @param {Object} [options.footer] - Footer configuration
+ * @param {string} options.footer.label - Footer label text
+ * @param {string} options.footer.prop - Property to display (e.g. 'length')
+ * @example
+ * footer: {
+ *   label: 'Total Stations',
+ *   prop: 'length'
+ * }
+ * 
+ * @param {boolean} [options.logmode] - Enable log mode for auto-scrolling
+ * @param {boolean} [options.verbose] - Enable verbose console logging
+ * @param {boolean} [options.single] - Restrict to single selection mode
+ * 
  * @returns {Object} List instance with control methods
  */
 function superList(options) {
@@ -64,7 +88,7 @@ function superList(options) {
 	fb('Init');
 	sl.registeredEvents = [];
 	sl.currentSearch = '';
-
+	
 	if(options.logmode){ fb('List is in Logmode'); register_event(sl.container, 'wheel', logWheelMute, {passive:true}) }
 
 	
@@ -87,6 +111,7 @@ function superList(options) {
 	sl.offSet = 0;
 	sl.stop = false;
 	sl.win = window || target.ownerDocument.defaultView;
+	
 	
 	register_event(sl.win, 'resize', resize);
 	function resize(e, delay=30){ clearTimeout(sl.checkHeight_timeout); sl.checkHeight_timeout = setTimeout(checkHeight,delay); }
@@ -300,7 +325,7 @@ function superList(options) {
 	function update(force=false) {
 		let data = sl.filtered;
 		if(data.length > 0){
-			sl.scrollPos = sl.list.scrollTop;
+			sl.scrollPos = Math.round(sl.list.scrollTop);
 			if(sl.options.logmode && !sl.scrollMute){
 				if(sl.list.scrollTop + sl.list.offsetHeight > sl.container.offsetHeight-(sl.sl_height+1)){
 					sl.list.scrollTop = sl.container.offsetHeight;
@@ -308,39 +333,42 @@ function superList(options) {
 				}
 			}
 			if (sl.scrollPos !== sl.lastScrollPos || force) {
-				
-				sl.maxVis = Math.ceil(sl.list.offsetHeight / sl.sl_height) + 6;
-				sl.offSet = Math.floor(sl.scrollPos / sl.sl_height);
+				sl.maxVis = Math.ceil(sl.list.offsetHeight / sl.sl_height) + 10;
+				sl.offSet = Math.floor(sl.scrollPos / sl.sl_height) - 5;
 				if (sl.offSet < 0) { sl.offSet = 0; }
 				if (sl.offSet > 0) { sl.offSet--; }
-
-				for(let i=0; i < data.length; i++){
-					if(i >= sl.offSet && i < (sl.maxVis + sl.offSet)){
-						if(!data[i].el){
-							data[i].el = renderItem(data[i]);
-							appendItem(data[i].el);
-						}
-						if(!data[i].el.parentNode){
-							appendItem(data[i].el);
-						}
-						if(data[i].selected){
-							data[i].el.addClass('selected')
-						}
-						else {
-							data[i].el.removeClass('selected')
-						}
-						data[i].el.fidx = i;
-						data[i].el.style.top = i*sl.sl_height + 'px';
+	
+				// Calculate visible range
+				const startIdx = sl.offSet;
+				const endIdx = Math.min(sl.maxVis + sl.offSet, data.length);
+	
+				// Clear all items from container
+				//ut.killKids(sl.container);
+				let childrens = sl.container.children;
+				for(let i=0; i<childrens.length; i++){
+					sl.container.removeChild(childrens[i]);
+				}
+				// Only iterate over visible items
+				for(let i = startIdx; i < endIdx; i++){
+					if(!data[i].el){
+						data[i].el = renderItem(data[i]);
+						appendItem(data[i].el);
+					}
+					if(!data[i].el.parentNode){
+						appendItem(data[i].el);
+					}
+					if(data[i].selected){
+						data[i].el.addClass('selected')
 					}
 					else {
-						if(data[i].el){
-							if(data[i].el.parentNode){
-								//removeItem(sl.data[i]);
-								sl.container.removeChild(data[i].el)
-							}
-						}
+						data[i].el.removeClass('selected')
 					}
+					data[i].el.fidx = i;
+					data[i].el.style.top = i*sl.sl_height + 'px';
 				}
+
+	
+				// ...existing error checking code...
 				if(sl.list.offsetHeight == 0){
 					fb('Not Right')
 				}
@@ -349,16 +377,20 @@ function superList(options) {
 				}
 			}
 		}
+
+	
+
 		function appendItem(item){
+			sl.container.appendChild(item);
 			if(item.update){
 				if(item.update_delay){
 					item.timeout = setTimeout(item.update, item.update_delay);
 				}
 				else {
-					update();
+					item.update();
 				}
 			}
-			sl.container.appendChild(item);
+			
 		}
 
 		function renderItem(data){
