@@ -1995,10 +1995,10 @@ input[type="number"]:focus {
 
 .superlist .fixed_list {
 	position: absolute;
-	top: calc(var(--ss-frame) + var(--ss-header-height));
+	top: var(--ss-frame);
 	left: var(--ss-frame);
 	right: calc(var(--ss-frame) + 2rem);
-	bottom: calc(var(--ss-frame) + var(--ss-footer-height));
+	bottom: var(--ss-frame);
 	overflow-x: hidden;
 	overflow-y: hidden;
 	z-index: 2;
@@ -2012,10 +2012,13 @@ input[type="number"]:focus {
     width: 1rem;
 }
 
-.superlist.hasFooter .list{
+.superlist.hasFooter .list,
+.superlist.hasFooter .fixed_list {
 	bottom: calc(var(--ss-footer-height) + var(--ss-frame));
 }
-.superlist.hasHeader .list{
+
+.superlist.hasHeader .list,
+.superlist.hasHeader .fixed_list {
 	top: calc(var(--ss-header-height) + var(--ss-frame));
 }
 
