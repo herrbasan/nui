@@ -1998,7 +1998,7 @@ input[type="number"]:focus {
 	top: calc(var(--ss-frame) + var(--ss-header-height));
 	left: var(--ss-frame);
 	right: calc(var(--ss-frame) + 2rem);
-	bottom: var(--ss-frame);
+	bottom: calc(var(--ss-frame) + var(--ss-footer-height));
 	overflow-x: hidden;
 	overflow-y: hidden;
 	z-index: 2;
