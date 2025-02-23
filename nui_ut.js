@@ -1201,12 +1201,29 @@ ut.icon = function(id, wrap_in_container, return_as_element){
 	return out;
 }
 
-ut.materialIcon = function(id, wrap_in_container, return_as_element){
-	if(wrap_in_container) { out = `<div class="nui-icon-container">${svg}</div>`}
-	if(return_as_element) { out = ut.createElement('svg', {class:`nui-icon ii_${id}`, attributes:{height:'24px', viewBox:'0 0 24 24', width:'24px', fill:'#ffffff'}}); }
-	console.log(id)
-	return out;
+ut.materialIcons = function(list, style='filled'){
+	let promises = [];
+	for(let i=0; i<list.length; i++){
+		let id = list[i];
+		if(!ut.icon_shapes[id]){
+			let url = `./nui/material_icons/${style}/${id}.svg`;
+			promises.push(load(id, url));
+		}
+	}
+	return Promise.all(promises);
+
+	function load(id, url){
+		return new Promise(async (resolve, reject) => {
+			let res = await fetch(url)
+			let svg = await res.text();
+			let doc = new DOMParser().parseFromString(svg, "text/xml");
+			let svg_node = doc.querySelector('svg');
+			ut.icon_shapes[id] = svg_node.innerHTML;
+			resolve();
+		})
+	}
 }
+
 
 ut.detectEnv = function() {
 	let detect = {

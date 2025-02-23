@@ -1993,6 +1993,17 @@ input[type="number"]:focus {
 	overflow-y: auto;
 }
 
+.superlist .fixed_list {
+	position: absolute;
+	top: calc(var(--ss-frame) + var(--ss-header-height));
+	left: var(--ss-frame);
+	right: calc(var(--ss-frame) + 2rem);
+	bottom: var(--ss-frame);
+	overflow-x: hidden;
+	overflow-y: hidden;
+	z-index: 2;
+}
+
 .superlist .list .container{
 	position: relative;
 }

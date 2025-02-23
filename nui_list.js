@@ -3,51 +3,6 @@ import ut from './nui_ut.js';
 import superSelect from './nui_select.js';
 let first = true;
 
-
-/**
- * Creates a virtualized list component with sorting and searching capabilities
- * @param {Object} options Configuration options
- * @param {HTMLElement} options.target - DOM element to render the list into
- * @param {Array<any>} options.data - Array of data items to display
- * @param {Function} options.render - Callback function to render each item (data) => HTMLElement
- * @param {string} [options.id] - Optional ID for the list container
- * @param {Function} [options.events] - Optional callback for list events (event) => void
- * 
- * @param {Array<{prop: string}>} [options.search] - Array of searchable properties
- * @example
- * search: [
- *   { prop: 'name' },
- *   { prop: 'country' },
- *   { prop: 'tags' }
- * ]
- * 
- * @param {Array<{label: string, prop: string}>} [options.sort] - Array of sortable columns
- * @param {number} [options.sort_default] - Index of default sort column (0-based)
- * @param {('up'|'down')} [options.sort_direction_default='up'] - Default sort direction
- * @example
- * sort: [
- *   { label: 'Name', prop: 'name' },
- *   { label: 'Country', prop: 'countrycode' },
- *   { label: 'Votes', prop: 'votes' }
- * ],
- * sort_default: 0, // Sort by first column (Name)
- * sort_direction_default: 'down' // Sort in descending order
- * 
- * @param {Object} [options.footer] - Footer configuration
- * @param {string} options.footer.label - Footer label text
- * @param {string} options.footer.prop - Property to display (e.g. 'length')
- * @example
- * footer: {
- *   label: 'Total Stations',
- *   prop: 'length'
- * }
- * 
- * @param {boolean} [options.logmode] - Enable log mode for auto-scrolling
- * @param {boolean} [options.verbose] - Enable verbose console logging
- * @param {boolean} [options.single] - Restrict to single selection mode
- * 
- * @returns {Object} List instance with control methods
- */
 function superList(options) {
 	let target = options.target;
 
@@ -64,6 +19,7 @@ function superList(options) {
 					</div>
 				</div>
 			</div>
+			<div class="fixed_list"></div>
 			<div class="list">
 				<div class="container"></div>
 			</div>
@@ -76,6 +32,7 @@ function superList(options) {
 	`)
 	target.appendChild(sl);
 	sl.list = sl.el('.list');
+	sl.fixed_list = sl.el('.fixed_list');
 	sl.container = sl.el('.list .container');
 	sl.header = sl.el('.header');
 	sl.header_right = sl.header.el('.right');
@@ -117,9 +74,14 @@ function superList(options) {
 		sl.scrollProz = sl.scrollPos / (sl.container.offsetHeight - sl.list.offsetHeight);
 	});
 
+	sl.fixed_list.addEventListener('wheel', (e) => {
+		sl.list.scrollTop += e.deltaY;
+		sl.scrollPos = sl.list.scrollTop;
+	})
 	register_event(sl.win, 'resize', resize);
 	function resize(e, delay=30){ clearTimeout(sl.checkHeight_timeout); sl.checkHeight_timeout = setTimeout(checkHeight,delay); }
 	register_event(sl.container, 'click', containerClick)
+	register_event(sl.fixed_list, 'click', containerClick)
 	function containerClick(e){ 
 		if(e.target.oidx){ itemSelect(e.target, e); }
 		else {
@@ -130,7 +92,7 @@ function superList(options) {
 		} 
 	}
 
-	sl.checkHeight_interval = setInterval(checkHeight,3000);
+	sl.checkHeight_interval = setInterval(checkHeight,300);
 
 	sl.observer = new IntersectionObserver((entries) => {
 		if (entries[0].isIntersecting === true) {
@@ -234,10 +196,6 @@ function superList(options) {
 	/* Data 
 	######################################################################################################## */
 
-	/**
-	 * Updates the list's data and refreshes the view
-	 * @private
-	 */
 	function updateData(){
 		sl.clone = [];
 		for(let i=0; i<options.data.length; i++){
@@ -245,13 +203,9 @@ function superList(options) {
 		}
 		//sl.filtered = sl.clone;
 		filter();
-		sl.container.style.height = sl.filtered.length * sl.sl_height + 'px';
+		setContainerHeight();
 	}
 
-	/**
-	 * Adds new items to the existing data
-	 * @private
-	 */
 	function appendData(){
 		if(sl.clone.length < options.data.length){
 			for(let i=sl.clone.length; i<options.data.length; i++){
@@ -259,18 +213,11 @@ function superList(options) {
 			}
 			//sl.filtered = sl.clone;
 			filter();
-			sl.container.style.height = sl.filtered.length * sl.sl_height + 'px';
+			setContainerHeight();
 			update(true)
 		}
 	}
 
-	/**
-	 * Updates a single item in the list
-	 * @private
-	 * @param {number} idx Index of item to update
-	 * @param {Object} data New data for the item
-	 * @param {boolean} [force=true] Force immediate update
-	 */
 	function updateItem(idx, data, force=true){
 		if(data) { sl.clone[idx].data = data }
 		sl.clone[idx].el = null;
@@ -303,7 +250,7 @@ function superList(options) {
 		else {
 			sl.filtered = sl.clone;
 		}
-		sl.container.style.height = sl.filtered.length * sl.sl_height + 'px';
+		setContainerHeight();
 		sort();
 		sl.lastSelect = null;
 		reset();
@@ -322,6 +269,10 @@ function superList(options) {
 		}
 	}
 
+	function setContainerHeight(){
+		sl.container.style.height = sl.filtered.length * sl.sl_height + 'px';
+	}
+
 
 	/* Render 
 	######################################################################################################## */
@@ -329,53 +280,92 @@ function superList(options) {
 	function update(force=false) {
 		let data = sl.filtered;
 		if(data.length > 0){
-			//sl.scrollPos = Math.round(sl.list.scrollTop);
-			if(sl.options.logmode && !sl.scrollMute){
-				if(sl.list.scrollTop + sl.list.offsetHeight > sl.container.offsetHeight-(sl.sl_height+1)){
-					sl.list.scrollTop = sl.container.offsetHeight;
-					sl.scrollPos = sl.list.scrollTop;
+			if(data.length < 1000){
+				sl.mode = 'normal';
+				sl.fixed_list.style.display = 'none';
+				sl.scrollPos = Math.round(sl.list.scrollTop);
+				if(sl.options.logmode && !sl.scrollMute){
+					if(sl.list.scrollTop + sl.list.offsetHeight > sl.container.offsetHeight-(sl.sl_height+1)){
+						sl.list.scrollTop = sl.container.offsetHeight;
+						sl.scrollPos = sl.list.scrollTop;
+					}
+				}
+				if (sl.scrollPos !== sl.lastScrollPos || force) {
+					sl.maxVis = Math.ceil(sl.list.offsetHeight / sl.sl_height) + 10;
+					sl.offSet = Math.floor(sl.scrollPos / sl.sl_height) - 5;
+					if (sl.offSet < 0) { sl.offSet = 0; }
+					if (sl.offSet > 0) { sl.offSet--; }
+					
+					// Calculate visible range
+					const startIdx = sl.offSet;
+					const endIdx = Math.min(sl.maxVis + sl.offSet, data.length);
+		
+					// Clear all items from container
+					ut.killKids(sl.container);
+					ut.killKids(sl.fixed_list);
+		
+					// Only iterate over visible items
+					for(let i = startIdx; i < endIdx; i++){
+						if(!data[i].el){
+							data[i].el = renderItem(data[i]);
+							appendItem(data[i].el);
+						}
+						if(!data[i].el.parentNode){
+							appendItem(data[i].el);
+						}
+						if(data[i].selected){
+							data[i].el.addClass('selected')
+						}
+						else {
+							data[i].el.removeClass('selected')
+						}
+						data[i].el.fidx = i;
+						data[i].el.style.top = i*sl.sl_height + 'px';
+						//data[i].el.style.transform = 'translateY(' + i*sl.sl_height + 'px)';
+					}
+					sl.lastScrollPos = sl.scrollPos;
+					sl.lastScrollProz = -1;
 				}
 			}
-			if (sl.scrollPos !== sl.lastScrollPos || force) {
-				sl.maxVis = Math.ceil(sl.list.offsetHeight / sl.sl_height) + 10;
-				sl.offSet = Math.floor(sl.scrollPos / sl.sl_height) - 5;
-				if (sl.offSet < 0) { sl.offSet = 0; }
-				if (sl.offSet > 0) { sl.offSet--; }
-	
-				// Calculate visible range
-				const startIdx = sl.offSet;
-				const endIdx = Math.min(sl.maxVis + sl.offSet, data.length);
-	
-				// Clear all items from container
-				ut.killKids(sl.container);
-	
-				// Only iterate over visible items
-				for(let i = startIdx; i < endIdx; i++){
-					if(!data[i].el){
-						data[i].el = renderItem(data[i]);
-						appendItem(data[i].el);
-					}
-					if(!data[i].el.parentNode){
-						appendItem(data[i].el);
-					}
-					if(data[i].selected){
-						data[i].el.addClass('selected')
-					}
-					else {
-						data[i].el.removeClass('selected')
-					}
-					data[i].el.fidx = i;
-					data[i].el.style.top = i*sl.sl_height + 'px';
-					//data[i].el.style.transform = 'translateY(' + i*sl.sl_height + 'px)';
-				}
+			else {
+				sl.mode = 'fixed';
+				sl.fixed_list.style.display = 'block';
+				sl.scrollProz = sl.scrollPos / (sl.container.offsetHeight - sl.list.offsetHeight);
+				if(sl.scrollProz != sl.lastScrollProz || force){
+					sl.maxVis = Math.ceil(sl.list.offsetHeight / sl.sl_height) + 1;
+					sl.offSet = Math.floor(sl.scrollProz * sl.filtered.length);
+					if (sl.offSet < 0) { sl.offSet = 0; }
 
-	
-				// ...existing error checking code...
-				if(sl.list.offsetHeight == 0){
-					fb('Not Right')
-				}
-				else {
-					sl.lastScrollPos = sl.scrollPos;
+					const startIdx = sl.offSet;
+					const endIdx = Math.min(sl.maxVis + sl.offSet, data.length);
+
+					// Clear all items from container
+					ut.killKids(sl.container);
+					ut.killKids(sl.fixed_list);
+
+					// Only iterate over visible items
+					
+					let pos_idx = 0;
+					for(let i = startIdx; i < endIdx; i++){
+						if(!data[i].el){
+							data[i].el = renderItem(data[i]);
+							appendItem(data[i].el);
+						}
+						if(!data[i].el.parentNode){
+							appendItem(data[i].el);
+						}
+						if(data[i].selected){
+							data[i].el.addClass('selected')
+						}
+						else {
+							data[i].el.removeClass('selected')
+						}
+						data[i].el.fidx = i;
+						data[i].el.style.top = pos_idx*sl.sl_height + 'px';
+						pos_idx++;
+					}
+					sl.lastScrollProz = sl.scrollProz;
+					sl.lastScrollPos = -1;
 				}
 			}
 		}
@@ -383,16 +373,28 @@ function superList(options) {
 	
 
 		function appendItem(item){
-			sl.container.appendChild(item);
+			if(sl.mode == 'fixed'){
+				sl.fixed_list.appendChild(item);
+			}
+			else {
+				sl.container.appendChild(item);
+			}
 			if(item.update){
 				if(item.update_delay){
-					item.timeout = setTimeout(item.update, item.update_delay);
+					item.timeout = setTimeout(checkIfVisible, item.update_delay);
 				}
 				else {
-					item.update();
+					checkIfVisible();
 				}
 			}
-			
+			function checkIfVisible(){
+				if(item.parentNode){
+					item.update();
+				}
+				else {
+					console.log('Not Visible');
+				}
+			}
 		}
 
 		function renderItem(data){
@@ -410,16 +412,16 @@ function superList(options) {
 		fb('Reset List')
 		sl.event({target:sl, type:'list', value:'reset'});
 		
-			if(sl.options.logmode){
-				sl.list.scrollTop = sl.container.offsetHeight;
-				sl.scrollPos = sl.list.scrollTop;
-				sl.lastScrollPos = -1;
-			}
-			else {
-				sl.list.scrollTop = 0;
-				sl.scrollPos = 0;
-				sl.lastScrollPos = -1;
-			}
+		if(sl.options.logmode){
+			sl.list.scrollTop = sl.container.offsetHeight;
+			sl.scrollPos = sl.list.scrollTop;
+		}
+		else {
+			sl.list.scrollTop = 0;
+			sl.scrollPos = 0;
+		}
+		sl.lastScrollPos = -1;
+		sl.lastScrollProz = -1;
 		
 		clearSelection();
 		if(sl.hasFooter){ sl.footer_center.innerText = sl.filtered.length; }
@@ -520,13 +522,17 @@ function superList(options) {
 	}
 
 	function checkHeight(){
-		if(sl.container.firstChild){
-			let height = getComputedSize(sl.container.firstChild).height;
+		let container = sl.container;
+		if(sl.mode == 'fixed'){
+			container = sl.fixed_list;
+		}
+		if(container.firstChild){
+			let height = getComputedSize(container.firstChild).height;
 			if(height != sl.sl_height){
 				fb('Item Height Changed: ' + height)
 				sl.event({target:sl, type:'height_change', value:height})
 				sl.sl_height = height;
-				sl.container.style.height = sl.filtered.length * sl.sl_height + 'px';
+				setContainerHeight();
 				update(true);
 			}
 		}
@@ -577,10 +583,7 @@ function superList(options) {
 		doc.querySelector('head').prepend(sheet);
 	}
 
-	/**
-	 * Cleans up the list component and removes event listeners
-	 * @public
-	 */
+
 	function cleanUp(){
 		fb('CleanUp');
 		sl.event({type:'list_cleanUp', value:'cleanup'})
