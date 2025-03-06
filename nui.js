@@ -11,6 +11,7 @@ let fb = function() { ut.fb('!ctx_NUI', ...arguments)}
 init();
 async function init(){
 	let env = ut.detectEnv();
+	nui.env = env;
 	fb(env);
 	nui.css_vars = await ut.checkNuiCss('--nui-main', 'nui_main.css');
 	fb(nui.css_vars['--nui-main'].value);

@@ -1,5 +1,74 @@
 'use strict';
 import ut from "./nui_ut.js"
+
+/*
+EXAMPLES:
+---------
+
+// Basic select with options
+superSelect(null, {
+    target: document.querySelector('#myContainer'),
+    searchable: true,
+    options: [
+        { name: 'Option 1', value: '1' },
+        { name: 'Option 2', value: '2', selected: true }
+    ]
+});
+
+// Multiple selection with groups
+superSelect(null, {
+    target: document.querySelector('#multiSelect'),
+    multiple: true,
+    searchable: true,
+    classes: 'custom-select',
+    options: [
+        { 
+            label: 'Group 1',
+            options: [
+                { name: 'Sub 1', value: 'sub1' },
+                { name: 'Sub 2', value: 'sub2' }
+            ]
+        }
+    ]
+});
+
+// Event handling
+let select = superSelect(null, {...});
+select.addEventListener('change', (event) => {
+    const { action, option } = event.detail;
+    console.log(`${option.name} was ${action}ed`);
+});
+
+// Dynamic updates
+select.addOption({
+    name: 'New Option',
+    value: 'new'
+});
+select.update();    // Update state
+select.reRender();  // Full re-render
+
+// State management
+select.disable();   // Disable select
+select.enable();    // Enable select
+let selected = select.getSelected();  // Get selected items
+
+// Using existing select element
+let existingSelect = document.querySelector('select');
+superSelect(existingSelect, {
+    searchable: true
+});
+
+CSS Variables:
+-------------
+.superSelect {
+    --nui-select-background: #2c2c2c;
+    --nui-select-color: #ffffff;
+    --nui-select-border: 1px solid rgba(255,255,255,0.1);
+    --nui-select-hover-background: rgba(255,255,255,0.1);
+    --nui-select-selected-background: rgba(255,255,255,0.2);
+}
+*/
+
 let fb = function() { ut.fb('!ctx_SEL', ...arguments)}
 let css_vars;
 /* SuperSelect
@@ -22,7 +91,6 @@ function superSelect(_el, settings){
 
 function initSuperSelect(_el, settings){
 	let id = ut.id();
-
 	_el.settings = settings ? settings : {searchable:false, animation:true};
 	if(_el.settings.animation == undefined) { _el.settings.animation = true};
 	_el.ss_id = id;
@@ -389,8 +457,6 @@ function updatePulldown(_el){
 ################################################################################################
 ################################################################################################ */
 
-
-
 function pulldownKeyEvent(e){
 	let _el = e.currentTarget.closest('.superSelect').select;
 	let options = _el.options;
@@ -574,8 +640,5 @@ function checkCSS(url, prop){
 		}
 	})
 }
-
-
-
 
 export default superSelect;

@@ -1053,9 +1053,10 @@ ut.getCssVar = function(prop, el) {
     return { value: value, unit: unit, absolute: isAbsolute, computed: computed };
 }
 
-ut.setCssVar = function(s, val) {
-    document.documentElement.style.setProperty(s, val);
+ut.setCssVar = function(varName, value, el = document.documentElement) {
+    el.style.setProperty(varName, value);
 }
+
 
 ut.cssColorString = function(ar) {
     if (ar.length > 3) {
@@ -1214,12 +1215,18 @@ ut.materialIcons = function(list, style='filled'){
 
 	function load(id, url){
 		return new Promise(async (resolve, reject) => {
-			let res = await fetch(url)
-			let svg = await res.text();
-			let doc = new DOMParser().parseFromString(svg, "text/xml");
-			let svg_node = doc.querySelector('svg');
-			ut.icon_shapes[id] = svg_node.innerHTML;
-			resolve();
+			try {
+				let res = await fetch(url)
+				let svg = await res.text();
+				let doc = new DOMParser().parseFromString(svg, "text/xml");
+				let svg_node = doc.querySelector('svg');
+				ut.icon_shapes[id] = svg_node.innerHTML;
+				resolve();
+			}
+			catch(e){
+				ut.icon_shapes[id] = ut.icon_shapes['close'];
+				resolve();
+			}
 		})
 	}
 }
@@ -1468,6 +1475,96 @@ ut.checkNuiCss = function(prop, url){
 		}
 		resolve(css_vars);
 	})
+}
+
+
+
+ut.match_conditions = {
+	'==' : { label: 'Equals', numeric: false, fn: function(a, b){ return a == b; }},
+	'!=' : { label: 'Not Equals', numeric: false, fn: function(a, b){ return a != b; }},
+	'>' : { label: 'Greater Than', numeric: true, fn: function(a, b){ return a > b; }},
+	'<' : { label: 'Less Than', numeric: true, fn: function(a, b){ return a < b; }},
+	'>=' : { label: 'Greater Than or Equal', numeric: true, fn: function(a, b){ return a >= b; }},
+	'<=' : { label: 'Less Than or Equal', numeric: true, fn: function(a, b){ return a <= b; }},
+	'contains' : { label: 'Contains', numeric: false, fn: function(a, b){ return a.indexOf(b) > -1; }},
+	'!contains' : { label: 'Does Not Contain', numeric: false, fn: function(a, b){ return a.indexOf(b) == -1; }},
+	'contains_any' : { label: 'Contains Any', numeric: false, fn: function(a, b){ 
+		if (!Array.isArray(b)) return false;
+		const terms = a.toLowerCase().split(',').map(x => x.trim());
+		return b.some(val => terms.includes(val.toLowerCase())); 
+	}},
+	'contains_all' : { label: 'Contains All', numeric: false, fn: function(a, b){ 
+		if (!Array.isArray(b)) return false;
+		const terms = a.toLowerCase().split(',').map(x => x.trim());
+		return b.every(val => terms.includes(val.toLowerCase())); 
+	}},
+	'is' : { label: 'Is Strictly Equal', numeric: false, fn: function(a, b){ return a === b; }},
+	'!is' : { label: 'Is Not Strictly Equal', numeric: false, fn: function(a, b){ return a !== b; }}
+};
+
+ut.match = function(item, condition, value){
+	try {
+		// Check if condition exists
+		if (!ut.match_conditions.hasOwnProperty(condition)) {
+			console.warn(`Invalid condition: ${condition}`);
+			return false;
+		}
+
+		// Check for null/undefined
+		if (item === undefined || item === null) {
+			return false;
+		}
+
+		// Get condition object
+		const condObj = ut.match_conditions[condition];
+
+		// Handle numeric comparisons
+		if (condObj.numeric) {
+			const numItem = Number(item);
+			const numValue = Number(value);
+			if (isNaN(numItem) || isNaN(numValue)) {
+				console.warn(`Invalid numeric comparison: ${item} ${condition} ${value}`);
+				return false;
+			}
+			return condObj.fn(numItem, numValue);
+		}
+
+		// Non-numeric comparison
+		return condObj.fn(item, value);
+	} catch (error) {
+		console.warn(`Error in match function: ${error.message}`);
+		return false;
+	}
+}
+
+ut.turboFilter = function(data, conditions) {
+	const result = [];
+	const len = data.length;
+	const condKeys = Object.keys(conditions);
+	const condLen = condKeys.length;
+	const condCache = condKeys.map(key => ({
+		key,
+		condition: conditions[key].condition,
+		value: conditions[key].value
+	}));
+	
+	for(let i = 0; i < len; i++) {
+		const item = data[i];
+		let matches = 0;
+		
+		for(let j = 0; j < condLen; j++) {
+			const cond = condCache[j];
+			if(ut.match(ut.deep_get(item, cond.key), cond.condition, cond.value)) {
+				matches++;
+			}
+		}
+		
+		if(matches === condLen) {
+			result.push(item);
+		}
+	}
+	
+	return result;
 }
 
 export default ut;

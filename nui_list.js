@@ -5,7 +5,6 @@ let first = true;
 
 function superList(options) {
 	let target = options.target;
-
 	let sl = ut.htmlObject(/*html*/`
 		<div id="${options.id || ut.id()}" class="superlist noselect">
 			<div class="header">
@@ -30,6 +29,7 @@ function superList(options) {
 			</div>
 		</div>
 	`)
+	sl.env = ut.detectEnv();
 	target.appendChild(sl);
 	sl.list = sl.el('.list');
 	sl.fixed_list = sl.el('.fixed_list');
@@ -57,12 +57,15 @@ function superList(options) {
 
 	sl.update = update;
 	sl.getSelection = getSelection;
+	sl.getSelectedListIndex = getSelectedListIndex;
+	sl.setSelection = setSelection;
 	sl.updateData = updateData;
 	sl.appendData = appendData;
 	sl.cleanUp = cleanUp;
 	sl.reset = reset;
 	sl.updateItem = updateItem;
 	sl.updateItems = updateItems;
+	sl.scrollToIndex = scrollToIndex;
 
 	sl.maxVis = 0;
 	sl.offSet = 0;
@@ -196,14 +199,19 @@ function superList(options) {
 	/* Data 
 	######################################################################################################## */
 
-	function updateData(){
+	function updateData(data){
+		if(data){
+			options.data = data;
+		}
 		sl.clone = [];
 		for(let i=0; i<options.data.length; i++){
 			sl.clone.push({oidx:i, el:null, data:options.data[i], selected:false})
 		}
 		//sl.filtered = sl.clone;
+		reset();
 		filter();
 		setContainerHeight();
+		update(true);
 	}
 
 	function appendData(){
@@ -254,7 +262,9 @@ function superList(options) {
 		sort();
 		sl.lastSelect = null;
 		reset();
+		sl.event({target:sl, type:'list', value:'filtered'});
 		fb(`Filter operation took ${Math.round(performance.now() - bench)} ms`)
+		fb('Filtered Items: ' + sl.filtered.length)
 	}
 
 	function sort(){
@@ -280,7 +290,7 @@ function superList(options) {
 	function update(force=false) {
 		let data = sl.filtered;
 		if(data.length > 0){
-			if(data.length < 1000){
+			if(data.length < 1000 || sl.env.isTouch){
 				sl.mode = 'normal';
 				sl.fixed_list.style.display = 'none';
 				sl.scrollPos = Math.round(sl.list.scrollTop);
@@ -332,10 +342,10 @@ function superList(options) {
 				sl.fixed_list.style.display = 'block';
 				sl.scrollProz = sl.scrollPos / (sl.container.offsetHeight - sl.list.offsetHeight);
 				if(sl.scrollProz != sl.lastScrollProz || force){
-					sl.maxVis = Math.ceil(sl.list.offsetHeight / sl.sl_height) + 1;
-					sl.offSet = Math.floor(sl.scrollProz * sl.filtered.length);
+					sl.maxVis = Math.ceil(sl.list.offsetHeight / sl.sl_height) ;
+					sl.offSet = Math.round((sl.scrollProz * sl.filtered.length));
 					if (sl.offSet < 0) { sl.offSet = 0; }
-
+					if (sl.offSet > (sl.filtered.length - sl.maxVis)) { sl.offSet = sl.filtered.length - sl.maxVis; }
 					const startIdx = sl.offSet;
 					const endIdx = Math.min(sl.maxVis + sl.offSet, data.length);
 
@@ -391,9 +401,6 @@ function superList(options) {
 				if(item.parentNode){
 					item.update();
 				}
-				else {
-					console.log('Not Visible');
-				}
 			}
 		}
 
@@ -422,7 +429,7 @@ function superList(options) {
 		}
 		sl.lastScrollPos = -1;
 		sl.lastScrollProz = -1;
-		
+		sl.last_sort = -1;
 		clearSelection();
 		if(sl.hasFooter){ sl.footer_center.innerText = sl.filtered.length; }
 		resize(null, 0);
@@ -508,7 +515,55 @@ function superList(options) {
 		return out;
 	}
 
+	function getSelectedListIndex(){
+		let out = [];
+		for(let i=0; i<sl.filtered.length; i++){
+			if(sl.filtered[i].selected){
+				out.push(i);
+			}
+		}
+		return out;
+	}
+
+	function setSelection(idx){	
+		clearSelection();
+		if(!idx || idx > sl.filtered.length-1){ idx = 0; }
+		if(!Array.isArray(idx)){
+			idx = [idx];
+		}
+		for(let i=0; i<idx.length; i++){
+			sl.filtered[idx[i]].selected = true;
+		}
+		scrollToIndex(idx[0]);
+	}
 	
+	function scrollToIndex(index) {
+    if(index < 0 || index >= sl.filtered.length) return;
+    
+    if(sl.mode === 'fixed') {
+        const totalItems = sl.filtered.length;
+        const paddingItems = 2;
+        const adjustedIndex = Math.max(0, index - paddingItems);
+        const viewportRatio = adjustedIndex / Math.max(1, totalItems);
+        const maxScrollTop = sl.container.offsetHeight - sl.list.offsetHeight;
+        const targetPosition = Math.max(0, Math.min(maxScrollTop, viewportRatio * maxScrollTop));
+        
+        sl.list.scrollTop = targetPosition;
+        sl.scrollPos = targetPosition;
+        sl.lastScrollPos = -1;
+    } else {
+        const itemPosition = index * sl.sl_height;
+        const paddingItems = 2;
+        const targetPosition = Math.max(0, itemPosition - (paddingItems * sl.sl_height));
+        
+        sl.list.scrollTop = targetPosition;
+        sl.scrollPos = targetPosition;
+        sl.lastScrollPos = -1;
+    }
+    
+    update(true);
+}
+
 	/* Misc 
 	######################################################################################################## */
 

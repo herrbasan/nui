@@ -40,10 +40,12 @@ function renderWindowFrame(prop){
         <div class="nui-app-content">
             <div class="nui-app-main">${inner}</div>
         </div>
-        <div class="nui-status-bar"></div>
+        ${prop.statusbar ? '<div class="nui-status-bar"></div>' : ''}
     </div>
     `)
-
+    if(!prop.statusbar){
+        ut.setCssVar('--app-window-statusbar-height','0',html);
+    }
     if(prop?.fnc_close){
         html.el('.nui-title-bar .close').addEventListener('click', prop.fnc_close);
     }
