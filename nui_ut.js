@@ -178,90 +178,140 @@ ut.fetch = async function(resource, options = {}) {
 }
 
 /**
- * 
+ * Enhanced jfetch with progress tracking
  * @param {string} url 
- * @param {object} data 		* params to send
- * @param {object} _options 	* request options
+ * @param {object} data - params to send
+ * @param {object} _options - request options
  * @returns {object}
  */
 ut.jfetch = function(url, data, _options){
-	return new Promise(async (resolve, reject) => {
-		let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
-		if(options.timeout){
-			options.controller = new AbortController();
-			options.signal = options.controller.signal;
-			options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
-		}
-		let formData = new FormData();
-		for(let key in data){
-			formData.append(key, data[key]);
-		}
-		options.body = formData;
-		fetch(url, options)
-		.then((response) => {
-			clearTimeout(options.timeout_id);
-			if(response.ok){
-				return response.json()
-			}
-			else {
-				throw new Error('Connection Refused');
-			}
-		})
-		.then((result) => {
-			resolve(result);
-		})
-		.catch((err) => {
-			clearTimeout(options.timeout_id);
-			resolve({error:err.toString()})
-		})
+    return new Promise(async (resolve, reject) => {
+        let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
+        if(options.timeout){
+            options.controller = new AbortController();
+            options.signal = options.controller.signal;
+            options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
+        }
+        let formData = new FormData();
+        for(let key in data){
+            formData.append(key, data[key]);
+        }
+        options.body = formData;
+        fetch(url, options)
+        .then((response) => {
+            if(options.timeout_id) clearTimeout(options.timeout_id);
+            
+            if(!response.ok){
+                throw new Error('Connection Refused');
+            }
+            
+            // Use progress tracking if onProgress callback provided
+            if(options.onProgress && typeof options.onProgress === 'function') {
+                return ut.trackFetchProgress(response, options.onProgress, 'json');
+            }
+            
+            return response.json();
+        })
+        .then((result) => {
+            resolve(result);
+        })
+        .catch((err) => {
+            if(options.timeout_id) clearTimeout(options.timeout_id);
+            resolve({error:err.toString()})
+        });
+    })
+}
 
-		
-	})
+/**
+ * Enhanced jDownload with progress tracking
+ * @param {string} url 
+ * @param {object} data - params to send
+ * @param {object} _options - request options
+ * @returns {Promise}
+ */
+ut.jDownload = function(url, data, _options){
+    return new Promise((resolve, reject) => {
+        let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
+        
+        if(options.timeout){
+            options.controller = new AbortController();
+            options.signal = options.controller.signal;
+            options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
+        }
+        
+        let formData = new FormData();
+        for(let key in data){
+            formData.append(key, data[key]);
+        }
+        options.body = formData;
+        
+        fetch(url, options)
+        .then(response => {
+            if(options.timeout_id) clearTimeout(options.timeout_id);
+            
+            if(!response.ok){
+                throw new Error('Connection Refused');
+            }
+            
+            // Use progress tracking if onProgress callback provided
+            if(options.onProgress && typeof options.onProgress === 'function') {
+                return ut.trackFetchProgress(response, options.onProgress, 'blob');
+            }
+            
+            return response.blob();
+        })
+        .then(blob => {
+            var file = window.URL.createObjectURL(blob);
+            window.location.assign(file);
+            resolve(file);
+        })
+        .catch(err => {
+            if(options.timeout_id) clearTimeout(options.timeout_id);
+            reject(err);
+        });
+    })
 }
 
 ut.jget = function(url, data, _options){
-	return new Promise((resolve, reject) => {
-		let options = _options ? _options : { credentials: 'same-origin', method: 'GET'}
-		//let controller = new AbortController();
-		//let request_timeout = setTimeout(() => { console.log('fetch request timout'); controller.abort()}, options.timeout || 10000)
-		let vars = '?';
-		for(let key in data){
-			vars += key + '=' + data[key] + '&';
-		}
-		if(vars == '?') { vars = ''}
-		fetch(url + vars, options)
-		.then((response) => {
-			//clearTimeout(request_timeout);
-			if(response.ok){
-				return response.json()
-			}
-			else {
-				throw new Error('Connection Refused');
-			}
-		})
-		.then((result) => {
-			resolve(result);
-		})
-		.catch(reject);
-	})
-}
+    return new Promise((resolve, reject) => {
+        let options = _options ? _options : { credentials: 'same-origin', method: 'GET'}
+        
+        if(options.timeout){
+            options.controller = new AbortController();
+            options.signal = options.controller.signal;
+            options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
+        }
 
-ut.jDownload = function(url, data, _options){
-	return new Promise((resolve, reject) => {
-		let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
-		let formData = new FormData();
-		for(let key in data){
-			formData.append(key, data[key]);
-		}
-		options.body = formData;
-		fetch(url, options)
-		.then( res => res.blob() )
-		.then( blob => {
-			var file = window.URL.createObjectURL(blob);
-			window.location.assign(file);
-		})
-		.catch(reject);
-	})
+        let vars = '?';
+        for(let key in data){
+            vars += key + '=' + data[key] + '&';
+        }
+        if(vars == '?') { vars = ''}
+        
+        fetch(url + vars, options)
+        .then((response) => {
+            if(options.timeout_id) clearTimeout(options.timeout_id);
+            
+            if(!response.ok){
+                throw new Error('Connection Refused');
+            }
+            
+            // Use progress tracking if onProgress callback provided
+            if(options.onProgress && typeof options.onProgress === 'function') {
+                return ut.trackFetchProgress(response, options.onProgress);
+            }
+            
+            // Regular flow without progress tracking
+            return response.json();
+        })
+        .then((result) => {
+            resolve(result);
+        })
+        .catch((err) => {
+            if(options.timeout_id) clearTimeout(options.timeout_id);
+            resolve({error:err.toString()})
+        });
+    });
 }
 
 ut.jString = function (str) { let out = str; try { out = JSON.parse(str); } finally { return out; } }
@@ -1155,6 +1205,7 @@ ut.checkCookie = function(cname, value) {
    return check; 
 }
 
+
 ut.icon_shapes = {
 	add:'<path d="M0 0h24v24H0z" fill="none"/><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>',
 	add_circle:'<path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>',
@@ -1191,7 +1242,15 @@ ut.icon_shapes = {
 	upload: '<g><rect fill="none" height="24" width="24"/></g><g><path d="M18,15v3H6v-3H4v3c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2v-3H18z M7,9l1.41,1.41L11,7.83V16h2V7.83l2.59,2.58L17,9l-5-5L7,9z"/></g>',
 	volume: '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>',
 	warning: '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
-	wysiwyg:'<g><rect fill="none" height="24" width="24"/><path d="M19,3H5C3.89,3,3,3.9,3,5v14c0,1.1,0.89,2,2,2h14c1.1,0,2-0.9,2-2V5C21,3.9,20.11,3,19,3z M19,19H5V7h14V19z M17,12H7v-2 h10V12z M13,16H7v-2h6V16z"/></g>'
+	wysiwyg:'<g><rect fill="none" height="24" width="24"/><path d="M19,3H5C3.89,3,3,3.9,3,5v14c0,1.1,0.89,2,2,2h14c1.1,0,2-0.9,2-2V5C21,3.9,20.11,3,19,3z M19,19H5V7h14V19z M17,12H7v-2 h10V12z M13,16H7v-2h6V16z"/></g>',
+	start: '<path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>',
+	radio: '<path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8c0-1.11-.89-2-2-2H8.3l8.26-3.34L15.88 1 3.24 6.15zM7 20c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-8h-2v-2h-2v2H4V8h16v4z"/>',
+	mouse: '<path d="M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93zM4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C7.05 1.56 4 4.92 4 9h7V1.07z"/>',
+	cancel: '<path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>',
+	play_circle: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.5 16.5v-9l7 4.5-7 4.5z"/>',
+	shuffle:'<path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>',
+	skip_next: '<path d="m6 18 8.5-6L6 6v12zM16 6v12h2V6h-2z"/>',
+	skip_previous: '<path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>',
 }
 
 ut.icon = function(id, wrap_in_container, return_as_element){
@@ -1201,36 +1260,6 @@ ut.icon = function(id, wrap_in_container, return_as_element){
 	if(return_as_element) { out = ut.htmlObject(out)}
 	return out;
 }
-
-ut.materialIcons = function(list, style='filled'){
-	let promises = [];
-	for(let i=0; i<list.length; i++){
-		let id = list[i];
-		if(!ut.icon_shapes[id]){
-			let url = `./nui/material_icons/${style}/${id}.svg`;
-			promises.push(load(id, url));
-		}
-	}
-	return Promise.all(promises);
-
-	function load(id, url){
-		return new Promise(async (resolve, reject) => {
-			try {
-				let res = await fetch(url)
-				let svg = await res.text();
-				let doc = new DOMParser().parseFromString(svg, "text/xml");
-				let svg_node = doc.querySelector('svg');
-				ut.icon_shapes[id] = svg_node.innerHTML;
-				resolve();
-			}
-			catch(e){
-				ut.icon_shapes[id] = ut.icon_shapes['close'];
-				resolve();
-			}
-		})
-	}
-}
-
 
 ut.detectEnv = function() {
 	let detect = {
@@ -1566,5 +1595,215 @@ ut.turboFilter = function(data, conditions) {
 	
 	return result;
 }
+
+/**
+ * Universal fetch utility that combines functionality of all fetch utilities
+ * @param {string} url - Target URL
+ * @param {object} data - Data to send (query params for GET, form data for POST)
+ * @param {object} options - Configuration options
+ * @returns {Promise} - Promise resolving to the response
+ */
+ut.fetchAll = function(url, data = {}, options = {}) {
+    return new Promise((resolve, reject) => {
+        // Default options
+        options = {
+            method: 'GET',
+            responseType: 'json', // 'json', 'blob', 'text'
+            credentials: 'same-origin',
+            download: false,      // Set to true to trigger file download
+            ...options
+        };
+        
+        // Setup abort controller for timeout
+        if(options.timeout) {
+            options.controller = new AbortController();
+            options.signal = options.controller.signal;
+            options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
+        }
+        
+        // Handle data based on method
+        if(options.method.toUpperCase() === 'GET') {
+            // Build query string for GET
+            let vars = '';
+            if (Object.keys(data).length > 0) {
+                vars = '?' + Object.entries(data)
+                    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+                    .join('&');
+            }
+            url += vars;
+        } else {
+            // Create FormData for POST/PUT
+            if (!(data instanceof FormData)) {
+                let formData = new FormData();
+                for(let key in data) {
+                    formData.append(key, data[key]);
+                }
+                data = formData;
+            }
+            options.body = data;
+        }
+        
+        // Make the request
+        fetch(url, options)
+            .then(response => {
+                // Clear timeout
+                if(options.timeout_id) clearTimeout(options.timeout_id);
+                
+                // Check response status
+                if(!response.ok) {
+                    throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                }
+                
+                // Use progress tracking if needed
+                if(options.onProgress && typeof options.onProgress === 'function') {
+                    return ut.trackFetchProgress(response, options.onProgress, options.responseType);
+                }
+                
+                // Process response based on type
+                switch(options.responseType) {
+                    case 'json': return response.json();
+                    case 'blob': return response.blob();
+                    case 'text': return response.text();
+                    default: return response.json();
+                }
+            })
+            .then(data => {
+                // Handle file downloads
+                if(options.download && options.responseType === 'blob') {
+                    const file = window.URL.createObjectURL(data);
+                    const a = document.createElement('a');
+                    a.href = file;
+                    a.download = options.filename || 'download';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(file);
+                    }, 0);
+                }
+                resolve(data);
+            })
+            .catch(err => {
+                // Clear timeout on error
+                if(options.timeout_id) clearTimeout(options.timeout_id);
+                
+                if (options.rejectErrors) {
+                    reject(err);
+                } else {
+                    resolve({error: err.toString()});
+                }
+            });
+    });
+};
+
+/**
+ * Tracks progress of a fetch response
+ * @param {Response} response - Fetch response object
+ * @param {Function} onProgress - Progress callback function(progress)
+ * @param {String} responseType - Type of response to return ('json', 'text', 'blob', etc)
+ * @returns {Promise} - Promise resolving to the processed response
+ */
+ut.trackFetchProgress = function(response, onProgress, responseType = 'json') {
+    // Get content length if available
+    const contentLength = response.headers.get('content-length');
+    const total = contentLength ? parseInt(contentLength) : 0;
+    let loaded = 0;
+    
+    // If no progress callback or browser doesn't support ReadableStream
+    if (!onProgress || !response.body) {
+        return response[responseType]();
+    }
+    
+    // Create a reader from the response body stream
+    const reader = response.body.getReader();
+    const chunks = [];
+    
+    // Progress tracking function
+    return new Promise((resolve, reject) => {
+        function processChunk() {
+            return reader.read().then(({ done, value }) => {
+                if (done) {
+                    // Combine chunks and parse based on responseType
+                    const chunksAll = new Uint8Array(loaded);
+                    let position = 0;
+                    for(const chunk of chunks) {
+                        chunksAll.set(chunk, position);
+                        position += chunk.length;
+                    }
+                    
+                    // Final progress update
+                    onProgress({
+                        loaded,
+                        total,
+                        progress: total ? (loaded / total) : 1
+                    });
+                    
+                    // Convert to requested type
+                    const blob = new Blob([chunksAll]);
+                    
+                    if (responseType === 'blob') {
+                        resolve(blob);
+                    } else if (responseType === 'json') {
+                        blob.text().then(text => {
+                            try {
+                                resolve(JSON.parse(text));
+                            } catch (e) {
+                                reject(new Error('Invalid JSON response'));
+                            }
+                        });
+                    } else if (responseType === 'text') {
+                        blob.text().then(resolve);
+                    } else {
+                        resolve(blob);
+                    }
+                    
+                    return;
+                }
+                
+                // Process chunk and update progress
+                loaded += value.length;
+                chunks.push(value);
+                
+                onProgress({
+                    loaded,
+                    total,
+                    progress: total ? (loaded / total) : null
+                });
+                
+                // Read next chunk
+                return processChunk();
+            });
+        }
+        
+        // Start processing
+        processChunk().catch(reject);
+    });
+};
+
+// Legacy wrappers for backward compatibility
+ut.jget = function(url, data, options) {
+    return ut.fetchAll(url, data, { 
+        ...options, 
+        method: 'GET', 
+        responseType: 'json' 
+    });
+};
+
+ut.jfetch = function(url, data, options) {
+    return ut.fetchAll(url, data, { 
+        ...options, 
+        method: 'POST', 
+        responseType: 'json' 
+    });
+};
+
+ut.jDownload = function(url, data, options) {
+    return ut.fetchAll(url, data, { 
+        ...options, 
+        method: 'POST', 
+        responseType: 'blob',
+        download: true
+    });
+};
 
 export default ut;
