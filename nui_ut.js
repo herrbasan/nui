@@ -767,7 +767,7 @@ ut.shuffleArray = function(ar, clone=false){
 
 ut.filter = (param) => {
     console.warn('ut.filter is deprecated and is now a shortcut to the ut.turboFilter function, please update your code');
-    
+
     // Convert old filter parameters to turboFilter format
     const conditions = {};
     const props = param.prop || [];

@@ -398,7 +398,7 @@ function superList(options) {
 				}
 			}
 			function checkIfVisible(){
-				if(item.parentNode){
+				if(item.parentNode && item.update){
 					item.update();
 				}
 			}
@@ -431,7 +431,7 @@ function superList(options) {
 		sl.lastScrollProz = -1;
 		sl.last_sort = -1;
 		clearSelection();
-		if(sl.hasFooter){ sl.footer_center.innerText = sl.filtered.length; }
+		if(sl.hasFooter){ sl.footer_center.innerText = sl?.filtered?.length || 0; }
 		resize(null, 0);
 	}
 
