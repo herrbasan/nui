@@ -1349,26 +1349,27 @@ ut.checkNuiCss = function(prop, url){
 
 
 ut.match_conditions = {
-	'==' : { label: 'Equals', numeric: false, fn: function(a, b){ return a == b; }},
-	'!=' : { label: 'Not Equals', numeric: false, fn: function(a, b){ return a != b; }},
-	'>' : { label: 'Greater Than', numeric: true, fn: function(a, b){ return a > b; }},
-	'<' : { label: 'Less Than', numeric: true, fn: function(a, b){ return a < b; }},
-	'>=' : { label: 'Greater Than or Equal', numeric: true, fn: function(a, b){ return a >= b; }},
-	'<=' : { label: 'Less Than or Equal', numeric: true, fn: function(a, b){ return a <= b; }},
-	'contains' : { label: 'Contains', numeric: false, fn: function(a, b){ return a.indexOf(b) > -1; }},
-	'!contains' : { label: 'Does Not Contain', numeric: false, fn: function(a, b){ return a.indexOf(b) == -1; }},
-	'contains_any' : { label: 'Contains Any', numeric: false, fn: function(a, b){ 
-		if (!Array.isArray(b)) return false;
-		const terms = a.toLowerCase().split(',').map(x => x.trim());
-		return b.some(val => terms.includes(val.toLowerCase())); 
-	}},
-	'contains_all' : { label: 'Contains All', numeric: false, fn: function(a, b){ 
-		if (!Array.isArray(b)) return false;
-		const terms = a.toLowerCase().split(',').map(x => x.trim());
-		return b.every(val => terms.includes(val.toLowerCase())); 
-	}},
-	'is' : { label: 'Is Strictly Equal', numeric: false, fn: function(a, b){ return a === b; }},
-	'!is' : { label: 'Is Not Strictly Equal', numeric: false, fn: function(a, b){ return a !== b; }}
+    '==' : { label: 'Equals', numeric: false, fn: function(a, b){ return a == b; }},
+    '!=' : { label: 'Not Equals', numeric: false, fn: function(a, b){ return a != b; }},
+    '>' : { label: 'Greater Than', numeric: true, fn: function(a, b){ return a > b; }},
+    '<' : { label: 'Less Than', numeric: true, fn: function(a, b){ return a < b; }},
+    '>=' : { label: 'Greater Than or Equal', numeric: true, fn: function(a, b){ return a >= b; }},
+    '<=' : { label: 'Less Than or Equal', numeric: true, fn: function(a, b){ return a <= b; }},
+    'contains' : { label: 'Contains', numeric: false, fn: function(a, b){ return String(a).indexOf(String(b)) > -1; }},
+    '!contains' : { label: 'Does Not Contain', numeric: false, fn: function(a, b){ return String(a).indexOf(String(b)) == -1; }},
+    'includes' : { label: 'Includes', numeric: false, fn: function(a, b){ return Array.isArray(a) && a.includes(b); }},
+    'contains_any' : { label: 'Contains Any', numeric: false, fn: function(a, b){ 
+        if (!Array.isArray(b)) return false;
+        const terms = a.toLowerCase().split(',').map(x => x.trim());
+        return b.some(val => terms.includes(val.toLowerCase())); 
+    }},
+    'contains_all' : { label: 'Contains All', numeric: false, fn: function(a, b){ 
+        if (!Array.isArray(b)) return false;
+        const terms = a.toLowerCase().split(',').map(x => x.trim());
+        return b.every(val => terms.includes(val.toLowerCase())); 
+    }},
+    'is' : { label: 'Is Strictly Equal', numeric: false, fn: function(a, b){ return a === b; }},
+    '!is' : { label: 'Is Not Strictly Equal', numeric: false, fn: function(a, b){ return a !== b; }}
 };
 
 ut.match = function(item, condition, value){
