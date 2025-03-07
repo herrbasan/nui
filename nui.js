@@ -268,6 +268,7 @@ nui.toggleMenu = function(){
 }
 
 nui.loaderShow = function(target, msg="LOADING"){
+	target = target || document.body;
 	let html = ut.htmlObject( /*html*/ `
 	<div id="loader" class="nui-overlay">
 		<div class="nui-loader-spinner"></div>

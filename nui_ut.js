@@ -164,173 +164,8 @@ ut.jcompare = function(obj_1, obj_2){
 	return is;
 }
 
-/*Experimental*/
-ut.fetch = async function(resource, options = {}) {
-	const { timeout = 8000 } = options;
-	const controller = new AbortController();
-	const id = setTimeout(() => controller.abort(), timeout);
-	const response = await fetch(resource, {
-	  ...options,
-	  signal: controller.signal  
-	});
-	clearTimeout(id);
-	return response;
-}
-
-/**
- * Enhanced jfetch with progress tracking
- * @param {string} url 
- * @param {object} data - params to send
- * @param {object} _options - request options
- * @returns {object}
- */
-ut.jfetch = function(url, data, _options){
-    return new Promise(async (resolve, reject) => {
-        let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
-        if(options.timeout){
-            options.controller = new AbortController();
-            options.signal = options.controller.signal;
-            options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
-        }
-        let formData = new FormData();
-        for(let key in data){
-            formData.append(key, data[key]);
-        }
-        options.body = formData;
-        fetch(url, options)
-        .then((response) => {
-            if(options.timeout_id) clearTimeout(options.timeout_id);
-            
-            if(!response.ok){
-                throw new Error('Connection Refused');
-            }
-            
-            // Use progress tracking if onProgress callback provided
-            if(options.onProgress && typeof options.onProgress === 'function') {
-                return ut.trackFetchProgress(response, options.onProgress, 'json');
-            }
-            
-            return response.json();
-        })
-        .then((result) => {
-            resolve(result);
-        })
-        .catch((err) => {
-            if(options.timeout_id) clearTimeout(options.timeout_id);
-            resolve({error:err.toString()})
-        });
-    })
-}
-
-/**
- * Enhanced jDownload with progress tracking
- * @param {string} url 
- * @param {object} data - params to send
- * @param {object} _options - request options
- * @returns {Promise}
- */
-ut.jDownload = function(url, data, _options){
-    return new Promise((resolve, reject) => {
-        let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
-        
-        if(options.timeout){
-            options.controller = new AbortController();
-            options.signal = options.controller.signal;
-            options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
-        }
-        
-        let formData = new FormData();
-        for(let key in data){
-            formData.append(key, data[key]);
-        }
-        options.body = formData;
-        
-        fetch(url, options)
-        .then(response => {
-            if(options.timeout_id) clearTimeout(options.timeout_id);
-            
-            if(!response.ok){
-                throw new Error('Connection Refused');
-            }
-            
-            // Use progress tracking if onProgress callback provided
-            if(options.onProgress && typeof options.onProgress === 'function') {
-                return ut.trackFetchProgress(response, options.onProgress, 'blob');
-            }
-            
-            return response.blob();
-        })
-        .then(blob => {
-            var file = window.URL.createObjectURL(blob);
-            window.location.assign(file);
-            resolve(file);
-        })
-        .catch(err => {
-            if(options.timeout_id) clearTimeout(options.timeout_id);
-            reject(err);
-        });
-    })
-}
-
-ut.jget = function(url, data, _options){
-    return new Promise((resolve, reject) => {
-        let options = _options ? _options : { credentials: 'same-origin', method: 'GET'}
-        
-        if(options.timeout){
-            options.controller = new AbortController();
-            options.signal = options.controller.signal;
-            options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
-        }
-
-        let vars = '?';
-        for(let key in data){
-            vars += key + '=' + data[key] + '&';
-        }
-        if(vars == '?') { vars = ''}
-        
-        fetch(url + vars, options)
-        .then((response) => {
-            if(options.timeout_id) clearTimeout(options.timeout_id);
-            
-            if(!response.ok){
-                throw new Error('Connection Refused');
-            }
-            
-            // Use progress tracking if onProgress callback provided
-            if(options.onProgress && typeof options.onProgress === 'function') {
-                return ut.trackFetchProgress(response, options.onProgress);
-            }
-            
-            // Regular flow without progress tracking
-            return response.json();
-        })
-        .then((result) => {
-            resolve(result);
-        })
-        .catch((err) => {
-            if(options.timeout_id) clearTimeout(options.timeout_id);
-            resolve({error:err.toString()})
-        });
-    });
-}
 
 ut.jString = function (str) { let out = str; try { out = JSON.parse(str); } finally { return out; } }
-
-ut.readJson = function (url){
-    return new Promise( async (resolve, reject) => {
-        let json = {};
-        let res = await fetch(url);
-        if(!res.ok) { resolve({error:'invalid url'}); return;}
-        
-        try {
-            json = await res.json();
-        }
-        catch(err) {
-            json = {error:err.toString()}
-        }
-        resolve(json);
-    })
-}
 
 ut.formatDate = function (n) {
 	let out = {};
@@ -931,41 +766,46 @@ ut.shuffleArray = function(ar, clone=false){
 }
 
 ut.filter = (param) => {
-	let filterd = [];
-	let data = param.data;
-	let search = param.search;
-	let prop = param.prop;
-	for(let i=0; i<data.length; i++){
-		let fields = [];
-		for(let n=0; n<prop.length; n++){
-			fields.push(ut.deep_get(data[i], prop[n]))
-		}
-		let sr = searchAny(search, fields);
-		if(sr){
-			if(param.return_index_only){
-				filterd.push(i);
-			}
-			else {
-				filterd.push(data[i]);
-			}
-		}
-	}
-	return filterd;
-	
-	
-	function searchAny(search, ar){
-		for(let i=0; i<ar.length; i++){
-			let t = String(ar[i]);
-			if(param.ignore_case){
-				t = t.toLowerCase();
-				search = search.toLowerCase();
-			}
-			if(t.includes(search)){
-				return true;
-			}
-		}
-		return false;
-	}
+    console.warn('ut.filter is deprecated and is now a shortcut to the ut.turboFilter function, please update your code');
+    
+    // Convert old filter parameters to turboFilter format
+    const conditions = {};
+    const props = param.prop || [];
+    
+    // If there are properties to search through, set up conditions for each
+    if (props.length > 0) {
+        for (let i = 0; i < props.length; i++) {
+            conditions[props[i]] = {
+                condition: 'contains',
+                value: param.search,
+                ignoreCase: param.ignore_case
+            };
+        }
+        
+        // Use turboFilter with OR logic (only one condition needs to match)
+        const allResults = [];
+        for (const key in conditions) {
+            const singleCondition = {};
+            singleCondition[key] = conditions[key];
+            const results = ut.turboFilter(param.data, singleCondition, param.ignore_case);
+            
+            // Add unique results to the allResults array
+            for (const item of results) {
+                if (!allResults.includes(item)) {
+                    allResults.push(item);
+                }
+            }
+        }
+        
+        // Handle index-only return
+        if (param.return_index_only) {
+            return allResults.map(item => param.data.indexOf(item));
+        }
+        return allResults;
+    }
+    
+    // If no properties, return empty array
+    return [];
 }
 
 ut.arrayToObject = function(ar, key){
@@ -1566,35 +1406,51 @@ ut.match = function(item, condition, value){
 	}
 }
 
-ut.turboFilter = function(data, conditions) {
-	const result = [];
-	const len = data.length;
-	const condKeys = Object.keys(conditions);
-	const condLen = condKeys.length;
-	const condCache = condKeys.map(key => ({
-		key,
-		condition: conditions[key].condition,
-		value: conditions[key].value
-	}));
-	
-	for(let i = 0; i < len; i++) {
-		const item = data[i];
-		let matches = 0;
-		
-		for(let j = 0; j < condLen; j++) {
-			const cond = condCache[j];
-			if(ut.match(ut.deep_get(item, cond.key), cond.condition, cond.value)) {
-				matches++;
-			}
-		}
-		
-		if(matches === condLen) {
-			result.push(item);
-		}
-	}
-	
-	return result;
+ut.turboFilter = function(data, conditions, ignoreCase = false) {
+    const result = [];
+    const len = data.length;
+    const condKeys = Object.keys(conditions);
+    const condLen = condKeys.length;
+    const condCache = condKeys.map(key => ({
+        key,
+        condition: conditions[key].condition,
+        value: conditions[key].value,
+        ignoreCase: conditions[key].ignoreCase !== undefined ? conditions[key].ignoreCase : ignoreCase
+    }));
+    
+    for(let i = 0; i < len; i++) {
+        const item = data[i];
+        let matches = 0;
+        
+        for(let j = 0; j < condLen; j++) {
+            const cond = condCache[j];
+            const itemValue = ut.deep_get(item, cond.key);
+            
+            // Apply case insensitivity if needed for string comparisons
+            let compareValue = itemValue;
+            let compareCondValue = cond.value;
+            
+            if(cond.ignoreCase && typeof compareValue === 'string' && typeof compareCondValue === 'string') {
+                compareValue = compareValue.toLowerCase();
+                compareCondValue = compareCondValue.toLowerCase();
+            }
+            
+            if(ut.match(compareValue, cond.condition, compareCondValue)) {
+                matches++;
+            }
+        }
+        
+        if(matches === condLen) {
+            result.push(item);
+        }
+    }
+    
+    return result;
 }
+
+/* Fetch Utilities */
+/* ############################################################################################ */
+/* ############################################################################################ */
 
 /**
  * Universal fetch utility that combines functionality of all fetch utilities
@@ -1805,5 +1661,96 @@ ut.jDownload = function(url, data, options) {
         download: true
     });
 };
+
+ut.readJson = function (url, options) {
+    return ut.fetchAll(url, {}, {
+        method: 'GET',
+        responseType: 'json',
+        ...options
+    });
+}
+
+
+/* Local Storage */
+/* ############################################################################################ */
+/* ############################################################################################ */
+
+ut.setStore = (key, val, mins) => {
+    try {
+        const valueToStore = typeof val === 'string' ? val : JSON.stringify(val);
+        if (mins) {
+            const expiresAt = new Date().getTime() + (mins * 60 * 1000);
+            localStorage.setItem(key, JSON.stringify({value: valueToStore, expiresAt}));
+        } else {
+            localStorage.setItem(key, valueToStore);
+        }
+        return true;
+    } catch (e) {
+        console.warn('Storage error:', e);
+        return false;
+    }
+}
+
+ut.getStore = (key, def = null) => {
+    try {
+        const item = localStorage.getItem(key);
+        if (item === null) return def;
+        
+        try {
+            const parsed = JSON.parse(item);
+            if (parsed && typeof parsed === 'object' && parsed.expiresAt) {
+                if (new Date().getTime() > parsed.expiresAt) {
+                    localStorage.removeItem(key);
+                    return def;
+                }
+                try { return JSON.parse(parsed.value); } 
+                catch { return parsed.value; }
+            }
+            return parsed;
+        } catch {
+            return item;
+        }
+    } catch (e) {
+        console.warn('Storage error:', e);
+        return def;
+    }
+}
+
+ut.removeStore = key => {
+    try {
+        localStorage.removeItem(key);
+        return true;
+    } catch (e) {
+        console.warn('Storage error:', e);
+        return false;
+    }
+}
+
+ut.hasStore = key => {
+    try {
+        const item = localStorage.getItem(key);
+        if (item === null) return false;
+        try {
+            const parsed = JSON.parse(item);
+            if (parsed && typeof parsed === 'object' && parsed.expiresAt) {
+                return new Date().getTime() <= parsed.expiresAt;
+            }
+        } catch {}
+        return true;
+    } catch (e) {
+        console.warn('Storage error:', e);
+        return false;
+    }
+}
+
+ut.clearStore = () => {
+    try {
+        localStorage.clear();
+        return true;
+    } catch (e) {
+        console.warn('Storage error:', e);
+        return false;
+    }
+}
 
 export default ut;
