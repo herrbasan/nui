@@ -118,7 +118,7 @@ function initSuperSelect(_el, settings){
 	_el.search_icon = ut.createElement('div', {classes:'ss-icon-close', target:_el.search})
 	_el.pulldown_open = false;
 	_el.parentNode.insertBefore(_el.container, _el);
-	
+	_el.setValue = (index) => {setValue(_el, index)};
 	_el.pulldown.style.display = 'none';
 	_el.container.addEventListener('click', mainClick);
 	_el.search_input.addEventListener('input', searchInput);
@@ -610,8 +610,6 @@ function renderButton(_el){
 	ut.killKids(_el.button);
 	_el.button.innerHTML = selected[0].label;
 }
-
-
 
 /* Tools
 ################################################################################################

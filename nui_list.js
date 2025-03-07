@@ -127,6 +127,10 @@ function superList(options) {
 			ut.killMe(sl.header_search);
 		}
 		else {
+			if (options.initial_search) {
+				//sl.header_search.el('input').value = options.initial_search;
+				//sl.currentSearch = options.initial_search;
+			}
 			register_event(sl.header_search, 'input', searchInput)
 		}
 		if(!options.sort){
@@ -134,26 +138,32 @@ function superList(options) {
 		}
 		else {
 			let settings = {target:sl.header_left, options:[]}
+			const sortDefault = options.sort_default || 0;
 			for(let i=0; i<options.sort.length; i++){
-				settings.options.push({name:options.sort[i].label, value:i})
-			}
-			if(options.sort_default){
-				settings.options[options.sort_default].selected = true;
+				settings.options.push({name:options.sort[i].label, value:i, selected:i === sortDefault})
 			}
 			sl.sort_select = superSelect(null, settings);
 			sl.currentSort = options.sort[options.sort_default || 0];
 			sl.currentOrder = options.sort_direction_default || 'up';
-			sl.last_order = options.sort_direction_default || 'up';
+			sl.last_sort = -1;
 			register_event(sl.sort_select, 'change', selectChange)
-			sl.sort_direction = ut.createElement('div', {classes:'up superSelect-direction', target:sl.header_left});
+			sl.sort_direction = ut.createElement('div', {classes:sl.currentOrder + ' superSelect-direction', target:sl.header_left});
 			register_event(sl.sort_direction, 'click', sortDirectionToggle)
 		}
 	}
 
-	function selectChange(e){
+	function selectChange(e) {
 		let idx = parseInt(e.detail.option.value);
 		sl.currentSort = options.sort[idx];
-		sl.event({target:sl, type:'sort_select', value:options.sort[idx]});
+		
+		// Use consistent 'sort' event type
+		sl.event({
+			target: sl, 
+			type: 'sort', 
+			index: idx, 
+			direction: sl.currentOrder
+		});
+		
 		filter();
 	}
 
@@ -164,16 +174,35 @@ function superList(options) {
 		sl.filter_timeout = setTimeout(filter, 100);
 	}
 
-	function sortDirectionToggle(e){
-		if(sl.currentOrder == 'down'){
+	function sortDirectionToggle(e) {
+		sl.sort_direction.removeClass('up');
+		sl.sort_direction.removeClass('down');
+		
+		if (sl.currentOrder == 'down') {
 			sl.currentOrder = 'up';
 			sl.sort_direction.addClass('up');
-		}
-		else {
+		} else {
 			sl.currentOrder = 'down';
-			sl.sort_direction.removeClass('up');
+			sl.sort_direction.addClass('down');
 		}
-		sl.last_sort = -1;
+		
+		// Get the current sort index for the event
+		let sortIndex = 0;
+		for (let i = 0; i < options.sort.length; i++) {
+			if (options.sort[i].prop === sl.currentSort.prop) {
+				sortIndex = i;
+				break;
+			}
+		}
+		
+		// Fire a consistent 'sort' event
+		sl.event({
+			target: sl, 
+			type: 'sort', 
+			index: sortIndex, 
+			direction: sl.currentOrder
+		});
+		
 		filter();
 	}
 
@@ -207,8 +236,8 @@ function superList(options) {
 		for(let i=0; i<options.data.length; i++){
 			sl.clone.push({oidx:i, el:null, data:options.data[i], selected:false})
 		}
-		//sl.filtered = sl.clone;
 		reset();
+		//sl.filtered = sl.clone;
 		filter();
 		setContainerHeight();
 		update(true);
@@ -267,14 +296,35 @@ function superList(options) {
 		fb('Filtered Items: ' + sl.filtered.length)
 	}
 
-	function sort(){
-		if(options.sort){
-			if(sl.last_sort != sl.currentSort){
-				ut.sortByKey(sl.filtered, 'data.' + sl.currentSort.prop, sl.currentSort.numeric);
-				sl.last_sort = sl.currentSort;
-				if(sl.currentOrder == 'down') {
+	function sort() {
+		if (options.sort) {
+			// Add direction tracking 
+			if (!sl.last_direction) {
+				sl.last_direction = options.sort_direction_default || 'up'; // Initialize properly
+			}
+			
+			// Check if either the column OR the direction changed
+			const directionChanged = sl.last_direction !== sl.currentOrder;
+			const columnChanged = sl.last_sort !== sl.currentSort;
+			
+			if (columnChanged || directionChanged) {
+				// If only direction changed and we're not resorting the column
+				if (directionChanged && !columnChanged) {
+					// Simply reverse the array - most efficient
 					sl.filtered.reverse();
-			 	}
+				} else {
+					// Full resort needed (column changed)
+					ut.sortByKey(sl.filtered, 'data.' + sl.currentSort.prop, sl.currentSort.numeric);
+					
+					// Apply reverse if needed
+					if (sl.currentOrder == 'down') {
+						sl.filtered.reverse();
+					}
+				}
+				
+				// Remember both the column and direction
+				sl.last_sort = sl.currentSort;
+				sl.last_direction = sl.currentOrder;
 			}
 		}
 	}
@@ -429,7 +479,7 @@ function superList(options) {
 		}
 		sl.lastScrollPos = -1;
 		sl.lastScrollProz = -1;
-		sl.last_sort = -1;
+		//sl.last_sort = -1;
 		clearSelection();
 		if(sl.hasFooter){ sl.footer_center.innerText = sl?.filtered?.length || 0; }
 		resize(null, 0);
@@ -563,6 +613,7 @@ function superList(options) {
     
     update(true);
 }
+
 
 	/* Misc 
 	######################################################################################################## */
