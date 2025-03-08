@@ -597,12 +597,21 @@ function getSelectedValues(_el){
 }
 
 function getSelectedKeyValues(_el){
-	let sel = getSelected(_el);
-	let out = [];
-	for(let i=0; i<sel.length; i++){
-		out.push({id:sel[i].value, name:sel[i].innerText})
-	}
-	return out;
+    let sel = getSelected(_el);
+    let out = [];
+    for(let i=0; i<sel.length; i++){
+        // Enhanced object with consistent properties
+        out.push({
+            // Original properties (maintain backward compatibility)
+            id: sel[i].value,
+            name: sel[i].innerText || sel[i].textContent,
+            
+            // New standardized properties
+            value: sel[i].value,
+            text: sel[i].innerText || sel[i].textContent
+        });
+    }
+    return out;
 }
 
 function renderButton(_el){
