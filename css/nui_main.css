@@ -1938,7 +1938,7 @@ input[type="number"]:focus {
 	height: 50%;
 	border-radius: 50%;
 	border: 0.4rem solid #fff;
-	border-color: rgba(255,255,255, 0) rgba(255,255,255, 0) rgba(255,255,255, 0) var(--color-highlight-dim);
+	border-color: rgba(var(--color-shadeX), 0) rgba(var(--color-shadeX), 0) rgba(var(--color-shadeX), 0) var(--color-highlight-dim);
 	animation: full_rotation 1.5s linear infinite;
 }
 
@@ -1954,6 +1954,19 @@ input[type="number"]:focus {
 	font-size: 1rem;
 }
 
+.nui-loader-spinner-bar {
+	position: absolute;
+	margin-top: 20rem;
+	width: 50%;
+	height: 0.3rem;
+	background-color: rgba(var(--color-shadeX),0.1);
+}
+
+.nui-loader-spinner-bar-inner {
+	width: 50%;
+	height: 100%;
+	background-color: var(--color-highlight-dim);
+}
 
 
 .nui-superlist{

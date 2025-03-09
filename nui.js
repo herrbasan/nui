@@ -273,11 +273,22 @@ nui.loaderShow = function(target, msg="LOADING"){
 	<div id="loader" class="nui-overlay">
 		<div class="nui-loader-spinner"></div>
 		<div class="nui-loader-spinner-text">${msg}</div>
+		<div class="nui-loader-spinner-bar">
+			<div class="nui-loader-spinner-bar-inner"></div>
+		</div>
 	</div>`
 	)
 	html.loader_text = html.el('.nui-loader-spinner-text');
+	html.proz_bar = html.el('.nui-loader-spinner-bar');
+	html.proz_bar_inner = html.el('.nui-loader-spinner-bar-inner');
+	html.proz_bar.style.visibility = 'hidden';
 	nui.animate(html, 'ani-scale-in');
 	
+	html.prozUpdate = (s) => {
+		html.proz_bar.style.visibility = 'visible'; 
+		html.proz_bar_inner.style.width = (s.progress*100) + '%';
+	}
+
 	html.kill = (delay=0) => {
 		setTimeout(() => {
 			nui.animate(html, 'ani-fade-out', () => {
