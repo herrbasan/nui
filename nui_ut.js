@@ -1325,6 +1325,72 @@ ut.ease = function(prop){
 	requestAnimationFrame(animate);
 }
 
+/**
+ * Interpolate a value over time using requestAnimationFrame
+ * @param {Object} options - Configuration object
+ * @param {number} options.from - Starting value
+ * @param {number} options.to - Target value
+ * @param {number} options.duration - Duration in milliseconds
+ * @param {Function} options.onUpdate - Callback function(value, progress)
+ * @param {Function} [options.onComplete] - Called when animation completes
+ * @param {string} [options.easing='easeInOutQuad'] - Easing function name from ut.eases
+ * @returns {Object} - Control object with stop() method
+ */
+ut.interpolate = function(options) {
+  const start = options.from, end = options.to, duration = options.duration || 500;
+  const easing = options.easing && ut.eases[options.easing] ? options.easing : 'easeInOutQuad';
+  const onUpdate = options.onUpdate || (() => {}), onComplete = options.onComplete || (() => {});
+  let startTime = null, animId = null, stopped = false;
+  
+  const animate = (timestamp) => {
+    if (stopped) return;
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const currentValue = ut.eases[easing](progress, start, end - start, 1);
+    onUpdate(currentValue, progress);
+    
+    if (progress < 1) animId = requestAnimationFrame(animate);
+    else onComplete();
+  };
+  
+  animId = requestAnimationFrame(animate);
+  return { stop: () => { stopped = true; if (animId) cancelAnimationFrame(animId); } };
+};
+
+/**
+ * Animate a property of an object over time using the ut.interpolate function
+ * @param {Object} options - Animation configuration
+ * @param {Object} options.target - Target object to modify
+ * @param {string} options.target_prop - Property name to animate
+ * @param {number} options.start - Starting value (or use 'from')
+ * @param {number} options.end - Target value (or use 'to')
+ * @param {number} [options.duration=500] - Animation duration in ms
+ * @param {string} [options.ease='easeInOutQuad'] - Easing function name
+ * @param {Function} [options.progress] - Progress callback(value)
+ * @param {Function} [options.cb] - Completion callback
+ * @returns {Object} - Control object with stop() method
+ */
+ut.easeProperty = function(options) {
+  const start = options.start ?? options.from ?? 0, end = options.end ?? options.to ?? 1;
+  const target = options.target, prop = options.target_prop, duration = options.duration || 500;
+  const easing = options.ease || 'easeInOutQuad', progress = options.progress, cb = options.cb;
+  
+  if (!target || !prop) return console.error("easeProperty requires target and target_prop options");
+  
+  return ut.interpolate({
+    from: start,
+    to: end,
+    duration: duration,
+    easing: easing,
+    onUpdate: (value) => {
+      target[prop] = value;
+      if (progress) progress(value);
+    },
+    onComplete: () => { if (cb) cb(); }
+  });
+};
+
 let nui_css_imports = {};
 ut.checkNuiCss = function(prop, url){
 	let css_vars = ut.getCssVars();
