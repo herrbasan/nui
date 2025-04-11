@@ -425,6 +425,7 @@
 	transform-origin: 50% 50%;
 }
 
-.superSelect-direction.up::before {
+.superSelect-direction.up::before,
+.superSelect-direction.ascending::before {
 	transform: translate3d(-50%, -25%, 0px) rotate(-45deg);
 }

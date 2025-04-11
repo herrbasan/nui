@@ -4,11 +4,9 @@
 let ut = {}
 ut.version = [3, 0, 0];
 ut.version_date = [2023, 3, 23];
-if(window) { window.ut = ut; }
-// 3.0 Stripped down to the really useful stuff
-
 
 let isWorker = false; try{(Element);} catch(err) { isWorker = true; }
+if(isWorker){ self.ut = ut; } else { window.ut = ut; }
 
 if(!isWorker){
 	if(!Element.prototype.el) { Element.prototype.el = function(s) { return ut.el(s, this); }}
@@ -799,7 +797,11 @@ ut.filter = (param) => {
         
         // Handle index-only return
         if (param.return_index_only) {
-            return allResults.map(item => param.data.indexOf(item));
+            let indices = [];
+			for (let i = 0, len = allResults.length; i < len; i++) {
+				indices.push(param.data.indexOf(allResults[i]));
+			}
+			allResults = indices;
         }
         return allResults;
     }
@@ -1744,41 +1746,48 @@ ut.fetchAll = function(url, data = {}, options = {}) {
  * @returns {Promise} - Promise resolving to the processed response
  */
 ut.trackFetchProgress = function(response, onProgress, responseType = 'json') {
-    // Get content length if available
-    const contentLength = response.headers.get('content-length');
-    const total = contentLength ? parseInt(contentLength) : 0;
+    // Determine if response is compressed
+    const contentEncoding = response.headers.get('content-encoding');
+    const isCompressed = (contentEncoding === 'gzip' || contentEncoding === 'deflate' || contentEncoding === 'br');
+
+    // Get compressed and uncompressed sizes
+    const compressedLength = response.headers.get('content-length');
+    const uncompressedLength = response.headers.get('x-uncompressed-content-length');
+    const total = compressedLength ? parseInt(compressedLength) : 0;
+    const originalTotal = uncompressedLength ? parseInt(uncompressedLength) : (isCompressed ? null : total);
     let loaded = 0;
-    
-    // If no progress callback or browser doesn't support ReadableStream
+
     if (!onProgress || !response.body) {
         return response[responseType]();
     }
-    
-    // Create a reader from the response body stream
+
     const reader = response.body.getReader();
     const chunks = [];
-    
-    // Progress tracking function
+
+    // Use originalTotal if available; otherwise, fall back to total (compressed size)
+    const effectiveTotal = originalTotal !== null ? originalTotal : total;
+
     return new Promise((resolve, reject) => {
         function processChunk() {
             return reader.read().then(({ done, value }) => {
                 if (done) {
-                    // Combine chunks and parse based on responseType
+                    // Combine chunks into one Uint8Array
                     const chunksAll = new Uint8Array(loaded);
                     let position = 0;
-                    for(const chunk of chunks) {
+                    for (const chunk of chunks) {
                         chunksAll.set(chunk, position);
                         position += chunk.length;
                     }
                     
-                    // Final progress update
+                    // Final progress update before conversion
                     onProgress({
                         loaded,
-                        total,
-                        progress: total ? (loaded / total) : 1
+                        total: effectiveTotal,
+                        originalSize: originalTotal,
+                        progress: effectiveTotal ? (loaded / effectiveTotal) : null,
+                        isCompressed
                     });
                     
-                    // Convert to requested type
                     const blob = new Blob([chunksAll]);
                     
                     if (responseType === 'blob') {
@@ -1800,22 +1809,21 @@ ut.trackFetchProgress = function(response, onProgress, responseType = 'json') {
                     return;
                 }
                 
-                // Process chunk and update progress
                 loaded += value.length;
                 chunks.push(value);
                 
+                // Update progress for each chunk
                 onProgress({
                     loaded,
-                    total,
-                    progress: total ? (loaded / total) : null
+                    total: effectiveTotal,
+                    originalSize: originalTotal,
+                    progress: effectiveTotal ? (loaded / effectiveTotal) : null,
+                    isCompressed
                 });
                 
-                // Read next chunk
                 return processChunk();
             });
         }
-        
-        // Start processing
         processChunk().catch(reject);
     });
 };
@@ -1852,6 +1860,12 @@ ut.readJson = function (url, options) {
         responseType: 'json',
         ...options
     });
+}
+
+ut.randomNumbers = function (max) {
+    let numbers = Array.from({ length: max }, (_, i) => i);
+    numbers = ut.shuffleArray(numbers);
+    return numbers;
 }
 
 

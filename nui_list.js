@@ -228,7 +228,9 @@ function superList(options) {
 	/* Data 
 	######################################################################################################## */
 
-	function updateData(data){
+
+
+	function updateData(data, skip_filter=false){
 		if(data){
 			options.data = data;
 		}
@@ -237,8 +239,8 @@ function superList(options) {
 			sl.clone.push({oidx:i, el:null, data:options.data[i], selected:false})
 		}
 		reset();
-		//sl.filtered = sl.clone;
-		filter();
+		if(!skip_filter){filter();}
+		else { sl.filtered = sl.clone;}
 		setContainerHeight();
 		update(true);
 	}

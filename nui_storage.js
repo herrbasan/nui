@@ -101,9 +101,12 @@ function createCleanDataCopy(obj) {
         return obj.map(item => createCleanDataCopy(item));
     }
     
-    // Handle objects
+    // Handle objects with deterministic property ordering
     const cleanObj = {};
-    for (const key in obj) {
+    // Sort keys to ensure consistent ordering in JSON.stringify
+    const sortedKeys = Object.keys(obj).sort();
+    
+    for (const key of sortedKeys) {
         // Skip functions and properties starting with _
         if (typeof obj[key] !== 'function' && !key.startsWith('_')) {
             cleanObj[key] = createCleanDataCopy(obj[key]);
@@ -487,6 +490,7 @@ class storageObject {
             const currentJSON = JSON.stringify(createCleanDataCopy(dataObj));
             if (currentJSON !== config.lastSavedJSON) {
                 debug('Check', 'Changes detected, saving');
+                config.isDirty = true;  // Set the dirty flag before saving
                 saveToStorage(dataObj, false);
                 return true;
             }

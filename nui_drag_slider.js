@@ -1,7 +1,7 @@
 'use strict';
 import ut from './nui_ut.js';
 
-function dragSlider(target, fnc, interval=-1){
+function dragSlider(target, fnc, interval=-1, subtarget=null){
 	let loopstop = false;
 	let ds = {current:{}, computed:{}};
 
@@ -33,7 +33,8 @@ function dragSlider(target, fnc, interval=-1){
 	}
 
 	function report(prop){
-		let rect = target.getBoundingClientRect();
+		// Use subtarget for calculations if provided, otherwise use main target
+		let rect = subtarget ? subtarget.getBoundingClientRect() : target.getBoundingClientRect();
 		let x = prop.x;
 		let y = prop.y;
 		let type = prop.type;
