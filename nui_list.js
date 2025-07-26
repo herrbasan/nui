@@ -3,6 +3,14 @@ import ut from './nui_ut.js';
 import superSelect from './nui_select.js';
 let first = true;
 
+<<<<<<< HEAD
+/**
+ * @see nui_list.d.ts for complete documentation
+ * @param {import('./nui_list.d.ts').SuperListOptions} options
+ * @returns {import('./nui_list.d.ts').SuperListInstance}
+ */
+=======
+>>>>>>> 2d00ab41f0c1f07f953f368f21a3c2b937d8637e
 function superList(options) {
 	let target = options.target;
 	let sl = ut.htmlObject(/*html*/`

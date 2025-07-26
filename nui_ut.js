@@ -1,5 +1,9 @@
 'use strict';
 
+/**
+ * @see nui_ut.d.ts for complete documentation and type definitions
+ */
+
 
 let ut = {}
 ut.version = [3, 0, 0];
@@ -162,6 +166,101 @@ ut.jcompare = function(obj_1, obj_2){
 	return is;
 }
 
+<<<<<<< HEAD
+/*Experimental*/
+ut.fetch = async function(resource, options = {}) {
+	const { timeout = 8000 } = options;
+	const controller = new AbortController();
+	const id = setTimeout(() => controller.abort(), timeout);
+	const response = await fetch(resource, {
+	  ...options,
+	  signal: controller.signal  
+	});
+	clearTimeout(id);
+	return response;
+}
+
+ut.jfetch = function(url, data, _options){
+	return new Promise(async (resolve, reject) => {
+		let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
+		if(options.timeout){
+			options.controller = new AbortController();
+			options.signal = options.controller.signal;
+			options.timeout_id = setTimeout(() => options.controller.abort(), options.timeout);
+		}
+		let formData = new FormData();
+		for(let key in data){
+			formData.append(key, data[key]);
+		}
+		options.body = formData;
+		fetch(url, options)
+		.then((response) => {
+			clearTimeout(options.timeout_id);
+			if(response.ok){
+				return response.json()
+			}
+			else {
+				throw new Error('Connection Refused');
+			}
+		})
+		.then((result) => {
+			resolve(result);
+		})
+		.catch((err) => {
+			clearTimeout(options.timeout_id);
+			resolve({error:err.toString()})
+		})
+
+		
+	})
+}
+
+ut.jget = function(url, data, _options){
+	return new Promise((resolve, reject) => {
+		let options = _options ? _options : { credentials: 'same-origin', method: 'GET'}
+		//let controller = new AbortController();
+		//let request_timeout = setTimeout(() => { console.log('fetch request timout'); controller.abort()}, options.timeout || 10000)
+		let vars = '?';
+		for(let key in data){
+			vars += key + '=' + data[key] + '&';
+		}
+		if(vars == '?') { vars = ''}
+		fetch(url + vars, options)
+		.then((response) => {
+			//clearTimeout(request_timeout);
+			if(response.ok){
+				return response.json()
+			}
+			else {
+				throw new Error('Connection Refused');
+			}
+		})
+		.then((result) => {
+			resolve(result);
+		})
+		.catch(reject);
+	})
+}
+
+ut.jDownload = function(url, data, _options){
+	return new Promise((resolve, reject) => {
+		let options = _options ? _options : { credentials: 'same-origin', method: 'POST'}
+		let formData = new FormData();
+		for(let key in data){
+			formData.append(key, data[key]);
+		}
+		options.body = formData;
+		fetch(url, options)
+		.then( res => res.blob() )
+		.then( blob => {
+			var file = window.URL.createObjectURL(blob);
+			window.location.assign(file);
+		})
+		.catch(reject);
+	})
+}
+=======
+>>>>>>> 2d00ab41f0c1f07f953f368f21a3c2b937d8637e
 
 ut.jString = function (str) { let out = str; try { out = JSON.parse(str); } finally { return out; } }
 
@@ -507,20 +606,6 @@ ut.clearEvents = function(_el){
 	}
 }
 
-/**
- * @description Creates an HTML Element 
- * @param {string} type Element Type like div | span | img | etc
- * @param {Object} options Options
- * @param {Element} options.target Target : Element
- * @param {string} options.id ID Attribute : String
- * @param {string} options.class Class or Classes : String or Object
- * @param {string} options.style Inline Styles : String or Object
- * @param {string} options.inner InnerHTML : String or Element
- * @param {Object} options.attributes Attributes : Object 
- * @param {Object} options.dataset Dataset : Object
- * @param {Object} options.events Events : Object * Key is event type, value the callback fnc
- * @returns  {Element} Returns HTML Element
- */
 ut.createElement = function (type, options){
 	let el = document.createElement(type);
 	if(options){
