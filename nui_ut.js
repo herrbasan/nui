@@ -166,7 +166,6 @@ ut.jcompare = function(obj_1, obj_2){
 	return is;
 }
 
-<<<<<<< HEAD
 /*Experimental*/
 ut.fetch = async function(resource, options = {}) {
 	const { timeout = 8000 } = options;
@@ -259,8 +258,6 @@ ut.jDownload = function(url, data, _options){
 		.catch(reject);
 	})
 }
-=======
->>>>>>> 2d00ab41f0c1f07f953f368f21a3c2b937d8637e
 
 ut.jString = function (str) { let out = str; try { out = JSON.parse(str); } finally { return out; } }
 
