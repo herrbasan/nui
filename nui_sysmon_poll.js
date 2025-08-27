@@ -2,7 +2,6 @@
 
 import ut from "./nui_ut.js";
 import { graph } from "./nui_graph.js";
-import { sensorFormatter } from "../../js/sensor_formatter.js";
 
 const sysmon_poll = {};
 
@@ -203,7 +202,7 @@ function renderData(html, data, type){
 	if(type.split('_')[0] === 'nic'){
 		value = calcBandwidth(data);
 	}
-	html.plot.innerHTML = sensorFormatter.formatSensorValue(value, data.type);
+	html.plot.innerHTML = sysmon_poll.formatSensorValue(value, data.type);
 	html.ring.push(value);
 	if(html.ring.length > history){ html.ring.shift();}
 	if(html.graph){
@@ -221,5 +220,77 @@ function calcBandwidth(data){
 	}
 	return out;
 }
+
+/**
+ * Formats sensor values based on type with consistent rules
+ * @param {number} value - Raw sensor value
+ * @param {string} type - Sensor type/unit (e.g., '°C', 'GHz', '%', etc.)
+ * @returns {string} Formatted value with unit
+ */
+sysmon_poll.formatSensorValue = function(value, type) {
+    if (value === null || value === undefined || isNaN(value)) {
+        return 'N/A';
+    }
+
+    let formattedValue;
+
+    switch (type) {
+        case '°C':
+        case '°F':
+            // Round temperatures to 1 decimal place
+            formattedValue = Math.round(value * 10) / 10;
+            break;
+
+        case 'GHz':
+        case 'MHz':
+            // Round frequencies to integers
+            formattedValue = Math.round(value);
+            break;
+
+        case '%':
+            // Round percentages to 1 decimal place
+            formattedValue = Math.round(value * 10) / 10;
+            break;
+
+        case 'RPM':
+            // Round fan speeds to integers
+            formattedValue = Math.round(value);
+            break;
+
+        case 'V':
+            // Round voltages to 2 decimal places
+            formattedValue = Math.round(value * 100) / 100;
+            break;
+
+        case 'W':
+        case 'kW':
+            // Round power to 1 decimal place
+            formattedValue = Math.round(value * 10) / 10;
+            break;
+
+        case 'KB/s':
+        case 'MB/s':
+        case 'GB/s':
+            // Round bandwidth to 1 decimal place
+            formattedValue = Math.round(value * 10) / 10;
+            break;
+
+        case 'B':
+        case 'KB':
+        case 'MB':
+        case 'GB':
+        case 'TB':
+            // Round storage sizes to integers
+            formattedValue = Math.round(value);
+            break;
+
+        default:
+            // For unknown types, round to 2 decimal places
+            formattedValue = Math.round(value * 100) / 100;
+            break;
+    }
+
+    return formattedValue + ' ' + type;
+};
 
 export { sysmon_poll }
