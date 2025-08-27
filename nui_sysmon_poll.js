@@ -2,6 +2,7 @@
 
 import ut from "./nui_ut.js";
 import { graph } from "./nui_graph.js";
+import { sensorFormatter } from "../../js/sensor_formatter.js";
 
 const sysmon_poll = {};
 
@@ -202,7 +203,7 @@ function renderData(html, data, type){
 	if(type.split('_')[0] === 'nic'){
 		value = calcBandwidth(data);
 	}
-	html.plot.innerHTML = data.value + ' ' + data.type;
+	html.plot.innerHTML = sensorFormatter.formatSensorValue(value, data.type);
 	html.ring.push(value);
 	if(html.ring.length > history){ html.ring.shift();}
 	if(html.graph){
