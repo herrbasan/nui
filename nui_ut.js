@@ -603,6 +603,12 @@ ut.clearEvents = function(_el){
 	}
 }
 
+/* support for deprecated function */
+ut.addElement = function (_target, _element, _id, _classes, _style, _inner){
+	console.warn('ut.addElement is deprecated, please use ut.createElement instead');
+	return this.createElement(_element, {id:_id, classes:_classes, style:_style, inner:_inner, target:ut.el(_target)});
+}
+
 ut.createElement = function (type, options){
 	let el = document.createElement(type);
 	if(options){
