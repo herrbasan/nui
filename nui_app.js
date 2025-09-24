@@ -1,5 +1,6 @@
 'use strict';
 import ut from './nui_ut.js';
+import contextMenu from './nui_context_menu.js';
 let css_vars;
 let appTools = {
     appWindow:appWindow,
@@ -13,7 +14,7 @@ let base_url = import.meta.url.substring(0, import.meta.url.lastIndexOf("/")+1);
 ########################################################################################## */
 
 async function appWindow(prop){
-    return new Promise(async (resolve, rejcet) => {
+    return new Promise(async (resolve, reject) => {
         let html = renderWindowFrame(prop);
         ut.checkNuiCss('--nui-app','nui_app.css');
         ut.killKids(document.body);
@@ -30,7 +31,7 @@ function renderWindowFrame(prop){
     <div class="nui-app">
         <div class="nui-title-bar">
             <div class="title">
-                <div class="nui-icon-container" onclick="document.body.classList.toggle('dark')">${prop?.icon || ut.icon('settings')}</div>
+                <div class="nui-icon-container">${prop?.icon || ut.icon('settings')}</div>
                 <div class="label">${title}</div>
             </div>
             <div class="controls">
@@ -55,6 +56,7 @@ function renderWindowFrame(prop){
         }
     }
 
+    renderTitleMenu(html, prop);
     if(window.electron_helper){
         window.electron_helper.window.hook_event('focus', winEvents);
 	    window.electron_helper.window.hook_event('blur', winEvents);
@@ -65,6 +67,35 @@ function renderWindowFrame(prop){
     }
 
     return html;
+}
+
+function renderTitleMenu(html, prop){
+   
+    if(!html) { return; }
+    let items = [
+        { title: 'Toggle Theme', fnc: () => { document.body.classList.toggle('dark'); }},
+    ];
+    if(prop?.functions){
+        for(const key in prop.functions){
+            items.push( prop.functions[key] );
+        }
+    }
+    if(window.electron_helper){
+        items.push(
+            { seperator:true },
+            { title: 'Toggle DevTools', fnc: async () => { await window.electron_helper.window.toggleDevTools(); }},
+            { title: 'Toggle Fullscreen', fnc: async (t, e) => {
+                    const isFS = await window.electron_helper.window.isFullScreen();
+                    await window.electron_helper.window.setFullScreen(!isFS);
+                }
+            },
+            { title: 'Center Window', fnc: async () => { await window.electron_helper.window.center(); }},
+            { title: 'Close', fnc: async () => { await window.electron_helper.window.close(); }},
+        );
+    }
+
+    // attach the context menu to the title element
+    const menu = contextMenu(html, items);
 }
 
 /**
