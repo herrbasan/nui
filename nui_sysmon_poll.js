@@ -199,26 +199,14 @@ function renderSensors(html, id, data){
 
 function renderData(html, data, type){
 	let value = data.value;
-	if(type.split('_')[0] === 'nic'){
-		value = calcBandwidth(data);
-	}
+	// Values are already correctly scaled with their units from both web and native polling
+	// Both go through the same flatten() function which preserves the LibreHardwareMonitor format
 	html.plot.innerHTML = sysmon_poll.formatSensorValue(value, data.type);
 	html.ring.push(value);
 	if(html.ring.length > history){ html.ring.shift();}
 	if(html.graph){
 		html.graph.draw(html.ring)
 	}
-}
-
-function calcBandwidth(data){
-	let out = data.value;
-	if(data.type == 'KB/s'){
-		out = data.value / 1024;
-	}
-	if(data.type == 'GB/s'){
-		out = data.value * 1024;
-	}
-	return out;
 }
 
 /**
