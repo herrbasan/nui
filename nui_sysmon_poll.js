@@ -21,6 +21,10 @@ let sortType = {
 sysmon_poll.init = async function(_target){
 	target = _target
 	target.addClass('sysmon');
+	// Clear internal state on re-initialization
+	pcs = {};
+	pcs_change = {};
+	g = {};
 	detectOnline();
 }
 
