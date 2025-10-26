@@ -123,6 +123,9 @@ function render(data){
 
 function renderHardware(html, data){
 	for(let type in data){
+		// Skip non-array properties (like poll_idx)
+		if(!Array.isArray(data[type])) continue;
+		
 		for(let i=0; i<data[type].length; i++){
 			let type_id = type + '_' + i;
 			if(!html[type_id]){
