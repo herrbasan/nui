@@ -18,6 +18,57 @@ let sortType = {
 	hdd:5
 }
 
+// Get graph colors based on current mode
+function getGraphColors() {
+	const isDark = document.body.classList.contains('dark');
+	if (isDark) {
+		return {
+			strokeStyle: 'rgb(76, 132, 229)',
+			fillStyle: 'rgba(76, 132, 229, 0.3)'
+		};
+	} else {
+		return {
+			strokeStyle: 'rgb(25, 118, 210)',
+			fillStyle: 'rgba(25, 118, 210, 0.4)'
+		};
+	}
+}
+
+// Update all existing graph colors when mode changes
+sysmon_poll.updateGraphColors = function() {
+	const colors = getGraphColors();
+	for (let uuid in pcs) {
+		const hardware = pcs[uuid].hardware;
+		updateHardwareGraphColors(hardware, colors);
+	}
+}
+
+function updateHardwareGraphColors(html, colors) {
+	// Iterate through all properties that might be sensor containers
+	for (let key in html) {
+		if (html[key] && html[key].sensor_types) {
+			updateSensorTypesGraphColors(html[key].sensor_types, colors);
+		}
+	}
+}
+
+function updateSensorTypesGraphColors(html, colors) {
+	for (let key in html) {
+		if (html[key] && html[key].sensors) {
+			updateSensorsGraphColors(html[key].sensors, colors);
+		}
+	}
+}
+
+function updateSensorsGraphColors(html, colors) {
+	for (let key in html) {
+		if (html[key] && html[key].graph) {
+			html[key].graph.strokeStyle = colors.strokeStyle;
+			html[key].graph.fillStyle = colors.fillStyle;
+		}
+	}
+}
+
 sysmon_poll.init = async function(_target){
 	target = _target
 	target.addClass('sysmon');
@@ -186,7 +237,8 @@ function renderSensors(html, id, data){
 					let reverse = false;
 					if(data[type].data.type == '°C'){ maxVal = 100; minVal=0; reverse=false;}
 					if(data[type].data.type == '%'){ maxVal = 100; minVal=0;}
-					html[type_id].graph = graph.init(html[type_id].el('.plot'), {lineWidth:2, strokeStyle:'rgb(76, 132, 229)', fillStyle:'rgba(76, 132, 229,0.3)', reverse:reverse, maxVal:maxVal, minVal:minVal});
+					const colors = getGraphColors();
+					html[type_id].graph = graph.init(html[type_id].el('.plot'), {lineWidth:2, strokeStyle:colors.strokeStyle, fillStyle:colors.fillStyle, reverse:reverse, maxVal:maxVal, minVal:minVal});
 				}
 				else {
 					ut.killMe(html[type_id].el('.plot'));
