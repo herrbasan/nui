@@ -77,9 +77,6 @@ let css_vars;
 
 function superSelect(_el, settings){
 	ut.checkNuiCss('--nui-select', 'nui_select.css')
-	/*checkCSS('./nui/css/nui_select.css', '--nui-select').then(() => {
-		initSuperSelect(_el, settings);
-	});*/
 	
 	if(!_el){
 		_el = renderSelect(settings);
