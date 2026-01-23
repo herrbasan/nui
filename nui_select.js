@@ -614,7 +614,12 @@ function getSelectedKeyValues(_el){
 function renderButton(_el){
 	let selected = getSelected(_el);
 	ut.killKids(_el.button);
-	_el.button.innerHTML = selected[0].label;
+	if(selected && selected.length > 0 && selected[0]){
+		_el.button.innerHTML = selected[0].label || selected[0].text;
+	} else if(_el.options && _el.options.length > 0) {
+		// Fallback: Show first option to match browser behavior for unselected single-selects
+		_el.button.innerHTML = _el.options[0].label || _el.options[0].text;
+	}
 }
 
 /* Tools
